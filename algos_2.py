@@ -157,7 +157,7 @@ def func_P(v_1, v_2):
 
 
 def grad_P(v_1, v_2):
-    return grad_f(v_1) - v_2 * sum([gc_i(v_1)*(1/c_i(v_1)) for gc_i, c_i in zip(gradconstraints(), constraints())]) #totest
+    return grad_f(v_1) - v_2 * [sum([gc_i(v_1)[q]*(1/c_i(v_1)[q]) for gc_i, c_i in zip(gradconstraints(), constraints())]) for q in range(5)]
 
 
 def create_rd_x_initial():
