@@ -203,7 +203,7 @@ def plot_ellipsoid_m2(A,b,z,w):
     maxPlotLimit = max(np.max(z),np.abs(np.min(z)));
     maxPlotLimit *= 1.5
 
-    delta = 0.1
+    delta = 0.01
     z1 = z2 = np.arange(-maxPlotLimit, maxPlotLimit, delta)
     Z1, Z2 = np.meshgrid(z1, z2)
     Z = np.ones_like(Z1)
@@ -226,7 +226,7 @@ def generate_rnd_points_m2(A, b, m):
     z = np.zeros([n, m])
     w = np.ones(m)
     for i in range(m):
-        z[:, i] = 6*np.max(A)*np.random.rand(n)-3*np.max(A)
+        z[:, i] = (6*abs(np.min(np.linalg.eigvals(A))*np.random.rand(n))-abs(3*np.min(np.linalg.eigvals(A))))/10
         z_i = z[:, i]
         if ((np.dot(z_i, np.dot(A, z_i))+ np.dot(z_i,b))-1) >= 0:
             w[i] = -1.0
