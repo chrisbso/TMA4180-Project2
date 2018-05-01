@@ -1,5 +1,5 @@
 import numpy as np
-import scipy as sp
+import scipy.optimize
 
 from evaluate_f_gradf import *
 from generate_testproblem import *
@@ -70,6 +70,8 @@ def steepest_descent(bound, x, my):
 
         x += alpha * direction
 
+        print(alpha, np.linalg.norm(grad_P(x, my), 2),func_f(x),x)
+
     return x
 
 
@@ -90,6 +92,8 @@ def armijo_stepsize_modded(x_old, my,  d, delta=.75, gamma=1, beta=.5):
         sigma *= beta
         x_new = x_old + sigma * d
 
+    #print(sigma)
+
     return sigma
 
 
@@ -98,9 +102,13 @@ def tau(n): return 1/2**n
 
 def barrier_method(my, x_init, k=1):
 
-    while np.linalg.norm(grad_f(x_init), 2) > 10**-4: # does this work?????
+    print(x_init)
+    print(np.linalg.norm(grad_f(x_init), 2) )
+    while np.linalg.norm(grad_f(x_init), 2) > 10**-1: # does this work?????
         x_init = steepest_descent(tau(k), x_init, my)
         my *= .5; k += 1
+        print(x_init)
+        print('\n ---------------------------------------------')
 
 
 # np.log = nan exception?
@@ -157,14 +165,14 @@ def func_P(v_1, v_2):
 
 
 def grad_P(v_1, v_2):
-    return grad_f(v_1) - v_2 * [sum([gc_i(v_1)[q]*(1/c_i(v_1)[q]) for gc_i, c_i in zip(gradconstraints(), constraints())]) for q in range(5)]
+    return grad_f(v_1) - v_2 * np.array([sum([gc_i(v_1)[q]*(1/c_i(v_1)) for gc_i, c_i in zip(gradconstraints(), constraints())]) for q in range(5)])
 
 
 def create_rd_x_initial():
     x = np.random.rand(5)
-    x[0] = x[0] * (l_min + l_max) + l_min
+    x[0] = x[0] * (l_max - l_min) + l_min
     x[1] += -1
-    x[2] = x[2] * (l_min + l_max) + l_min
+    x[2] = x[2] * (l_max - l_min) + l_min
     return x
 
 
@@ -175,14 +183,19 @@ def call_for_help(z,w):
             {'type': 'ineq', 'fun': lambda x: 10 - x[0]},
             {'type': 'ineq', 'fun': lambda x: (x[0]*x[2])**.5 - (.1**2+x[1]**2)**.5})
 
-    func_mod = lambda x, z, w: evaluate_f_m2(z, w, phi(x,2))
+    func_mod = lambda x, z, w: evaluate_f_m2(z, w, phi(x,2)[0], phi(x,2)[1])
 
-    result = sp.optimize.minimze(func_mod, create_rd_x_initial(), (z,w), constraints=cons, tol=10**-6)
+    result = scipy.optimize.minimize(func_mod, create_rd_x_initial(), (z,w), constraints=cons, tol=10**-6)
 
     print(result)
 
+    print(func_f(result.x))
+    print(result.x)
+
 
 if __name__ == "__main__":
+
+    temp = 0
 
     global z
     global w
@@ -192,11 +205,20 @@ if __name__ == "__main__":
     l_min = 0.1
     l_max = 10
 
-    A, b = phi(create_rd_x_initial(),2)
+    my_x = create_rd_x_initial()
 
-    (z, w) = generate_rnd_points_m1(A, b, 200)
+    A, b = phi(my_x,2)
 
-    #barrier_method(1, create_rd_x_initial())
+    (z, w) = generate_rnd_points_m2(A, b, 200)
+
+    while sum(w) == -200:
+        (z, w) = generate_rnd_points_m2(A, b, 200)
+        temp += 1; print(temp)
+
+
+    barrier_method(.001, create_rd_x_initial())
 
     #call_for_help(z,w)
+
+    print(my_x)
 
