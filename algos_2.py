@@ -208,9 +208,11 @@ if __name__ == "__main__":
     my_x = create_rd_x_initial()
 
     A, b = phi(my_x,2)
-
-    (z, w) = generate_rnd_points_m2(A, b, 200)
-
+    A = generate_rnd_ND_mx(2)
+    (z, w) = generate_rnd_points_m2(A, b, 100)
+    plot_ellipsoid_m2(A,b,z,w)
+    plt.show()
+'''
     while sum(w) == -200:
         (z, w) = generate_rnd_points_m2(A, b, 200)
         temp += 1; print(temp)
@@ -221,4 +223,4 @@ if __name__ == "__main__":
     #call_for_help(z,w)
 
     print(my_x)
-
+'''

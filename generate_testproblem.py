@@ -69,7 +69,7 @@ def evaluate_test_m1(n,m):
 
 def evaluate_test_m2(n,m):
     # generate A,b to make points
-    A = generate_rnd_mx(n)
+    A = generate_rnd_ND_mx(n)
     b = generate_rnd_b_c(n)
 
     # generate points with w_i's
@@ -116,6 +116,7 @@ def evaluate_test_m2(n,m):
     plt.figtext(0.65,0.15,'n = ' + str(n) + ', m = ' + str(m),fontsize = 12)
     plt.show()
     #print(evaluate_grad_f_m2(z, w, A, b))
+    '''
 def generate_rnd_PD_mx(n):
     alpha = 0.2  # to guarantee our matrix is PD and not PSD.
     A = np.random.rand(n, n) # A is now random n x n matrix
@@ -123,7 +124,7 @@ def generate_rnd_PD_mx(n):
     A = A+alpha*np.identity(n)
     #  A is now PD
     return A
-
+'''
 def generate_rnd_mx(n):
     A = np.random.rand(n, n)
     A = (A+A.transpose())/2
@@ -226,7 +227,7 @@ def generate_rnd_points_m2(A, b, m):
     z = np.zeros([n, m])
     w = np.ones(m)
     for i in range(m):
-        z[:, i] = (6*abs(np.min(np.linalg.eigvals(A))*np.random.rand(n))-abs(3*np.min(np.linalg.eigvals(A))))/10
+        z[:, i] = ((np.max(np.sqrt(np.abs(np.linalg.eigvals(A))))*np.random.rand(n))-0.5*np.max(np.sqrt(np.abs(np.linalg.eigvals(A)))))/1
         z_i = z[:, i]
         if ((np.dot(z_i, np.dot(A, z_i))+ np.dot(z_i,b))-1) >= 0:
             w[i] = -1.0
@@ -234,3 +235,34 @@ def generate_rnd_points_m2(A, b, m):
 
 if __name__ == "__main__":
     main()
+    b = 0
+#####NEW
+
+def generate_rnd_PD_mx(n):
+    alpha = 0.2 # to guarantee our matrix is PD and not PSD.
+    A = np.random.rand(n, n) # A is now random n x n matrix
+    A = np.matmul(A,A.transpose())/0.3# A is now PSD
+    A = A+alpha*np.identity(n)
+    #  A is now PD
+    return A
+'''
+def generate_rnd_ND_mx(n):
+    A = np.random.rand(n, n)
+    A = (A+A.transpose())/1
+    A = A - 1.3*np.max(np.linalg.eigvals(A))*np.eye(2) #Make our matrix ND
+    print(A)
+    print(np.linalg.det(A))
+    print(np.linalg.eigvals(A))
+    return A
+'''
+
+def generate_rnd_indef_mx(n):
+    A = np.random.rand(n,n)
+    A = (A+A.transpose())/0.3
+    if np.linalg.det(A) > 0:
+        A[0,0] = -abs(A[0,0]) - abs(A[0,1])
+        A[1,1] = abs(A[1,1]) + abs(A[1,0])
+    print(A)
+    print(np.linalg.det(A))
+    print(np.linalg.eigvals(A))
+    return A
