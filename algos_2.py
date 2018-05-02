@@ -70,7 +70,7 @@ def steepest_descent(bound, x, my):
 
         x += alpha * direction
 
-        print(alpha, np.linalg.norm(grad_P(x, my), 2),func_f(x),x)
+        #print(np.linalg.norm(grad_P(x, my), 2), my)
 
     return x
 
@@ -92,27 +92,31 @@ def armijo_stepsize_modded(x_old, my,  d, delta=.75, gamma=1, beta=.5):
         sigma *= beta
         x_new = x_old + sigma * d
 
-    #print(sigma)
-
     return sigma
 
 
-def tau(n): return 1/2**n
+def tau(n): return .5**n
 
 
-def barrier_method(my, x_init, k=1):
+def barrier_method(my, x_init, bound, k=1):
 
-    print(x_init)
-    print(np.linalg.norm(grad_f(x_init), 2) )
-    while np.linalg.norm(grad_f(x_init), 2) > 10**-1: # does this work?????
+    x_good_sol = call_for_help(bound, x_init)
+
+    conv_in_f = [abs(func_f(x_good_sol)-func_f(x_init))]
+
+    x_storage = [x_init]
+
+    t_storage = [1]
+
+    while np.linalg.norm(grad_f(x_init), 2) > bound: # does this work?????
         x_init = steepest_descent(tau(k), x_init, my)
-        my *= .5; k += 1
+        my *= .5; k += 1; conv_in_f.append(abs(func_f(x_good_sol)-func_f(x_init))); x_storage.append(x_init);
+        t_storage.append(tau(k))
         print(x_init)
         print('\n ---------------------------------------------')
 
+    return x_storage, conv_in_f, t_storage
 
-# np.log = nan exception?
-# phi dim?
 
 def c1(x): return x[0] - l_min
 
@@ -176,7 +180,7 @@ def create_rd_x_initial():
     return x
 
 
-def call_for_help(z,w):
+def call_for_help(bound, x_input):
     cons = ({'type': 'ineq', 'fun': lambda x: x[0] - 0.1},
             {'type': 'ineq', 'fun': lambda x: 10 - x[0]},
             {'type': 'ineq', 'fun': lambda x: x[2] - 0.1},
@@ -185,17 +189,12 @@ def call_for_help(z,w):
 
     func_mod = lambda x, z, w: evaluate_f_m2(z, w, phi(x,2)[0], phi(x,2)[1])
 
-    result = scipy.optimize.minimize(func_mod, create_rd_x_initial(), (z,w), constraints=cons, tol=10**-6)
+    result = scipy.optimize.minimize(func_mod, x_input, (z,w), constraints=cons, tol=bound)
 
-    print(result)
-
-    print(func_f(result.x))
-    print(result.x)
+    return result.x
 
 
 if __name__ == "__main__":
-
-    temp = 0
 
     global z
     global w
@@ -205,22 +204,40 @@ if __name__ == "__main__":
     l_min = 0.1
     l_max = 10
 
+    termination_crit = 10**-3
+
     my_x = create_rd_x_initial()
 
-    A, b = phi(my_x,2)
-    A = generate_rnd_ND_mx(2)
-    (z, w) = generate_rnd_points_m2(A, b, 100)
-    plot_ellipsoid_m2(A,b,z,w)
+    A, b = phi(my_x, 2)
+
+    #A, b = generate_rnd_mx(2, 'own', phi(create_rd_x_initial(),2)[0]), np.random.rand(2)
+    #A, b = generate_rnd_mx(2, 'ND'), np.random.rand(2)
+    #A, b = generate_rnd_mx(2, 'PD'), np.random.rand(2)
+
+    (z, w) = generate_rnd_points_m2(A, b, 200)
+
+    while abs(sum(w)) > 160:
+        my_x = create_rd_x_initial()
+
+        A, b = phi(my_x, 2)
+        (z, w) = generate_rnd_points_m2(A, b, 200)
+
+
+    x_sol, conv, t = barrier_method(.001, create_rd_x_initial(), termination_crit)
+
+'''
+    A2, b2 = phi(x_sol,2)
+    plot_ellipsoid_m2(A, b, z, w)
+    plot_ellipsoid_m2(A2, b2, z, w)
     plt.show()
 '''
-    while sum(w) == -200:
-        (z, w) = generate_rnd_points_m2(A, b, 200)
-        temp += 1; print(temp)
 
 
-    barrier_method(.001, create_rd_x_initial())
-
-    #call_for_help(z,w)
-
-    print(my_x)
-'''
+# Abbruch mit lagrangian
+# Q -> Anton (maybe)
+# I) reasonable selection of my?
+# II) does it depend on tau?
+# when we have GN then
+# -> new stepsize control? switch to sd
+# -> start with sd and switch to gn?
+# ->
