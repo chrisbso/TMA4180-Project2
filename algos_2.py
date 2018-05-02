@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.optimize
+import matplotlib.pyplot as plt
 
 from evaluate_f_gradf import *
 from generate_testproblem import *
@@ -104,17 +105,30 @@ def barrier_method(my, x_init, bound, k=1):
 
     conv_in_f = [abs(func_f(x_good_sol)-func_f(x_init))]
 
-    x_storage = [x_init]
+    #x_storage = np.zeros((1,len(x_init)))
+    #x_storage=first.reshape((1, len(x_init)))
+    x_storage=[np.array(x_init)]    
 
     t_storage = [1]
 
-    while np.linalg.norm(grad_f(x_init), 2) > bound: # does this work?????
+    while np.linalg.norm(grad_f(x_init), 2) > bound: 
+        # feasible starting point, that is updated
+      
         x_init = steepest_descent(tau(k), x_init, my)
-        my *= .5; k += 1; conv_in_f.append(abs(func_f(x_good_sol)-func_f(x_init))); x_storage.append(x_init);
+        
+        my *= .5
+        k += 1
+        #error development array
+        conv_in_f.append(abs(func_f(x_good_sol)-func_f(x_init)))
+        # development of x array
+        
+        x_storage.append(np.array(x_init))
+        #x_storage=np.concatenate((x_storage, x_init.reshape((1, len(x_init)))), axis=0)
+         # development of tau array
         t_storage.append(tau(k))
-        print(x_init)
-        print('\n ---------------------------------------------')
-
+        #print(x_init)
+        #print('\n ---------------------------------------------')
+    
     return x_storage, conv_in_f, t_storage
 
 
@@ -194,7 +208,36 @@ def call_for_help(bound, x_input):
     return result.x
 
 
+def plot_convergence(conv_1, color_1, label1, y_axis, kind_of_plotting):
+    '''Creates convergence plots over iterations.
+    '''
+    n=len(conv_1)
+    grid = np.arange(0,n,1)
+                   
+    if(kind_of_plotting=='loglog'):  
+        # plot using loglog scale
+        plt.loglog(grid, conv_1,'-',label=label1, color=color_1)
+        
+    elif(kind_of_plotting=='plot'):
+        # using normal plotting scale, without first entry
+        plt.plot(grid[1:], conv_1[1:],'-',label=label1, color=color_1)
+        
+    else:
+        print('undefined kind of ploting scale! Enter \'loglog\' or \'plot\'.')
+    
+    plt.xlabel("iterations")
+    plt.ylabel(y_axis)
+    #plot legend
+    plt.legend(loc=9, bbox_to_anchor=(0.5, -0.4), ncol=2)
+    # show also the legend and title
+    plt.tight_layout(pad=7)
+
+
 if __name__ == "__main__":
+    
+    '''set boolean True if you want to see the plots. For saving computational
+    time, use False.'''
+    boolean= True
 
     global z
     global w
@@ -224,13 +267,96 @@ if __name__ == "__main__":
 
 
     x_sol, conv, t = barrier_method(.001, create_rd_x_initial(), termination_crit)
+    
 
-'''
+    '''
     A2, b2 = phi(x_sol,2)
     plot_ellipsoid_m2(A, b, z, w)
     plot_ellipsoid_m2(A2, b2, z, w)
     plt.show()
-'''
+    '''
+
+
+    if(boolean==True):
+            #first figure
+            
+            plt.figure(1)
+            plot_convergence(conv, 'r','error function','numerical error','loglog')
+            #change string to own/ND/PD
+            string="comparison own numerical solution and built-in function \n test data set with exact solution"
+            plt.title(string)
+            #plt.savefig('comp_SD_b.png', format='png', transporent=True, bbox_inches='tight', pad_inches=0.005)
+            plt.show()
+            
+            plt.figure(2)
+            plot_convergence(conv, 'r','error function','numerical error','plot')
+            #change string to own/ND/PD
+            string="comparison own numerical solution and built-in function \n test data set with exact solution"
+            plt.title(string)
+            #plt.savefig('comp_SD_b.png', format='png', transporent=True, bbox_inches='tight', pad_inches=0.005)
+            plt.show()
+            
+            plt.figure(3)
+            stor_f=np.zeros(len(x_sol))
+            for i in range(len(x_sol)):
+                stor_f[i]=func_f(x_sol[i])
+                
+            plot_convergence(stor_f, 'g','blabla', 'objective function','loglog')
+            #change string to own/ND/PD
+            string="development of objective function \n test data set with exact solution"
+            plt.title(string)
+            #plt.savefig('comp_SD_b.png', format='png', transporent=True, bbox_inches='tight', pad_inches=0.005)
+            plt.show()
+            
+            
+            plt.figure(4)
+            stor_f=np.zeros(len(x_sol))
+            for i in range(len(x_sol)):
+                stor_f[i]=func_f(x_sol[i])
+                
+            plot_convergence(stor_f, 'g','blabla', 'objective function','plot')
+            #change string to own/ND/PD
+            string="development of objective function \n test data set with exact solution"
+            plt.title(string)
+            #plt.savefig('comp_SD_b.png', format='png', transporent=True, bbox_inches='tight', pad_inches=0.005)
+            plt.show()
+            
+            
+
+            plt.figure(5)
+            plot_convergence(np.linalg.norm((np.array(x_sol)-my_x), axis=1), 'b','blabla', 'error','loglog')
+            #change string to own/ND/PD
+            string="error exact solution and own numerical solution \n test data set with exact solution"
+            plt.title(string)
+            #plt.savefig('comp_SD_b.png', format='png', transporent=True, bbox_inches='tight', pad_inches=0.005)
+            plt.show()
+            
+            plt.figure(6)
+            plot_convergence(np.linalg.norm((np.array(x_sol)-my_x), axis=1), 'b','blabla', 'error','plot')
+            #change string to own/ND/PD
+            string="error exact solution and own numerical solution \n test data set with exact solution"
+            plt.title(string)
+            #plt.savefig('comp_SD_b.png', format='png', transporent=True, bbox_inches='tight', pad_inches=0.005)
+            plt.show()
+            
+            
+            '''
+            plt.figure(2)
+            plt.plot(np.take(z[0,:],np.where(w==1)[0]),np.take(z[1,:],np.where(w==1)[0]),'ro', alpha=0.5, ms=5)
+            plt.plot(np.take(z[0,:],np.where(w==-1)[0]),np.take(z[1,:],np.where(w==-1)[0]),'bo',alpha=0.5, ms=5)
+            plot_ellipses2(v3,z,w)
+            plt.title('Model 2, steepest descent')
+            #plt.savefig('Model2_SD_b.png')
+            plt.show()
+            
+            plt.figure(3)
+            plt.plot(np.take(z[0,:],np.where(w==1)[0]),np.take(z[1,:],np.where(w==1)[0]),'ro', alpha=0.5, ms=5)
+            plt.plot(np.take(z[0,:],np.where(w==-1)[0]),np.take(z[1,:],np.where(w==-1)[0]),'bo', alpha=0.5, ms=5)
+            plot_ellipses2(v4,z,w)
+            plt.title('Model 2, Gauß-Newton')
+            #plt.savefig('Model2_GN_b.png')
+            plt.show()
+            '''
 
 
 # Abbruch mit lagrangian
