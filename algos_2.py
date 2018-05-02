@@ -290,7 +290,8 @@ if __name__ == "__main__":
     
     '''set boolean True if you want to see the plots. For saving computational
     time, use False.'''
-    boolean= False
+    boolean= True
+    method='own'
 
     global z
     global w
@@ -301,16 +302,17 @@ if __name__ == "__main__":
     l_max = 10
 
     termination_crit = 10**-3
-
+    #################################################
     my_x = create_rd_x_initial()
+    print(my_x)
 
     A, b = phi(my_x, 2)
-
+    #################################################
     A, b = generate_rnd_mx(2, 'own', phi(create_rd_x_initial(),2)[0]), np.random.rand(2)
     print(A)
-    A, b = generate_rnd_mx(2, 'indef'), np.random.rand(2)
+    #A, b = generate_rnd_mx(2, 'indef'), np.random.rand(2)
     print(A)
-    A, b = generate_rnd_mx(2, 'PD'), np.random.rand(2)
+    #A, b = generate_rnd_mx(2, 'PD'), np.random.rand(2)
     print(A)
 
     (z, w) = generate_rnd_points_m2(A, b, 200)
@@ -365,27 +367,36 @@ if __name__ == "__main__":
             #plt.savefig('comp_SD_b.png', format='png', transporent=True, bbox_inches='tight', pad_inches=0.005)
             plt.show()
             
-            
+            if(method=='own'):
 
-            plt.figure(5)
-            plot_convergence(np.linalg.norm((np.array(x_sol)-my_x), axis=1), 'b','blabla', 'error','loglog')
-            #plt.savefig('comp_SD_b.png', format='png', transporent=True, bbox_inches='tight', pad_inches=0.005)
-            plt.show()
+                plt.figure(5)
+                plot_convergence(np.linalg.norm((np.array(x_sol)-phi_inv(A, b)), axis=1), 'b','blabla', 'error','loglog')
+                #plt.savefig('comp_SD_b.png', format='png', transporent=True, bbox_inches='tight', pad_inches=0.005)
+                plt.show()
+                
+                plt.figure(6)
+                plot_convergence(np.linalg.norm((np.array(x_sol)-phi_inv(A, b)), axis=1), 'b','blabla', 'error','plot')
+                #plt.savefig('comp_SD_b.png', format='png', transporent=True, bbox_inches='tight', pad_inches=0.005)
+                plt.show()
+                
             
-            plt.figure(6)
-            plot_convergence(np.linalg.norm((np.array(x_sol)-my_x), axis=1), 'b','blabla', 'error','plot')
-            #plt.savefig('comp_SD_b.png', format='png', transporent=True, bbox_inches='tight', pad_inches=0.005)
-            plt.show()
-            
-            
-            
-            plt.figure(7)
-            plt.plot(np.take(z[0,:],np.where(w==1)[0]),np.take(z[1,:],np.where(w==1)[0]),'ro', alpha=0.8, ms=3)
-            plt.plot(np.take(z[0,:],np.where(w==-1)[0]),np.take(z[1,:],np.where(w==-1)[0]),'bo',alpha=0.5, ms=3)
-            plot_ellipses(my_x,np.array(x_sol),z)
-            plt.title('exact solution and convergence to it')
-            #plt.savefig('Model2_SD_b.png')
-            plt.show()
+                plt.figure(7)
+                plt.plot(np.take(z[0,:],np.where(w==1)[0]),np.take(z[1,:],np.where(w==1)[0]),'ro', alpha=0.8, ms=3)
+                plt.plot(np.take(z[0,:],np.where(w==-1)[0]),np.take(z[1,:],np.where(w==-1)[0]),'bo',alpha=0.5, ms=3)
+                plot_ellipses(phi_inv(A, b),np.array(x_sol),z)
+                plt.title('exact solution and convergence to it')
+                #plt.savefig('Model2_SD_b.png')
+                plt.show()
+                
+            else:
+                plt.figure(8)
+                plt.plot(np.take(z[0,:],np.where(w==1)[0]),np.take(z[1,:],np.where(w==1)[0]),'ro', alpha=0.8, ms=3)
+                plt.plot(np.take(z[0,:],np.where(w==-1)[0]),np.take(z[1,:],np.where(w==-1)[0]),'bo',alpha=0.5, ms=3)
+                plot_ellipses(phi_inv(A, b),np.array(x_sol),z)
+                plt.title('exact solution and convergence to it')
+                #plt.savefig('Model2_SD_b.png')
+                plt.show()
+                 
             
            
 
