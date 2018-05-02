@@ -124,11 +124,12 @@ def generate_rnd_PD_mx(n):
     A = A+alpha*np.identity(n)
     #  A is now PD
     return A
-'''
+
 def generate_rnd_mx(n):
     A = np.random.rand(n, n)
     A = (A+A.transpose())/2
     return A
+'''
 
 def generate_rnd_b_c(n):
     return n*np.random.rand(n)-n/2
@@ -238,12 +239,34 @@ if __name__ == "__main__":
     b = 0
 #####NEW
 
+def generate_rnd_mx(*args):
+    if type(args[1]) is str and type(args[0]) is int:
+        if args[1] == 'PD':
+            A = generate_rnd_PD_mx(args[0])
+        elif args[1] == 'indef':
+            A = generate_rnd_indef_mx(args[0])
+        elif args[1] == 'own' and len(args) == 3:
+            A = args[2]
+        else:
+            raise ValueError('generate_rnd_mx(): "str" is either "PD", "indef" or "own". "own" requires a third arguement (your desired function). Try again.')
+    else:
+         raise ValueError('"str" must be a string. Try again.')
+    return A
+
 def generate_rnd_PD_mx(n):
     alpha = 0.2 # to guarantee our matrix is PD and not PSD.
     A = np.random.rand(n, n) # A is now random n x n matrix
     A = np.matmul(A,A.transpose())/0.3# A is now PSD
     A = A+alpha*np.identity(n)
     #  A is now PD
+    return A
+
+def generate_rnd_indef_mx(n):
+    A = np.random.rand(n,n)
+    A = (A+A.transpose())/0.3
+    if np.linalg.det(A) > 0:
+        A[0,0] = -abs(A[0,0]) - abs(A[0,1])
+        A[1,1] = abs(A[1,1]) + abs(A[1,0])
     return A
 '''
 def generate_rnd_ND_mx(n):
@@ -256,13 +279,4 @@ def generate_rnd_ND_mx(n):
     return A
 '''
 
-def generate_rnd_indef_mx(n):
-    A = np.random.rand(n,n)
-    A = (A+A.transpose())/0.3
-    if np.linalg.det(A) > 0:
-        A[0,0] = -abs(A[0,0]) - abs(A[0,1])
-        A[1,1] = abs(A[1,1]) + abs(A[1,0])
-    print(A)
-    print(np.linalg.det(A))
-    print(np.linalg.eigvals(A))
-    return A
+

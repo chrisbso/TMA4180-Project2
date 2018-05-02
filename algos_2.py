@@ -290,7 +290,7 @@ if __name__ == "__main__":
     
     '''set boolean True if you want to see the plots. For saving computational
     time, use False.'''
-    boolean= True
+    boolean= False
 
     global z
     global w
@@ -306,9 +306,12 @@ if __name__ == "__main__":
 
     A, b = phi(my_x, 2)
 
-    #A, b = generate_rnd_mx(2, 'own', phi(create_rd_x_initial(),2)[0]), np.random.rand(2)
-    #A, b = generate_rnd_mx(2, 'ND'), np.random.rand(2)
-    #A, b = generate_rnd_mx(2, 'PD'), np.random.rand(2)
+    A, b = generate_rnd_mx(2, 'own', phi(create_rd_x_initial(),2)[0]), np.random.rand(2)
+    print(A)
+    A, b = generate_rnd_mx(2, 'indef'), np.random.rand(2)
+    print(A)
+    A, b = generate_rnd_mx(2, 'PD'), np.random.rand(2)
+    print(A)
 
     (z, w) = generate_rnd_points_m2(A, b, 200)
 
