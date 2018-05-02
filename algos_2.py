@@ -231,6 +231,59 @@ def plot_convergence(conv_1, color_1, label1, y_axis, kind_of_plotting):
     plt.legend(loc=9, bbox_to_anchor=(0.5, -0.4), ncol=2)
     # show also the legend and title
     plt.tight_layout(pad=7)
+    
+def plot_ellipses(creation, array,z):
+    ''' Plots the ellipses of model 2. Takes an array with the stored x-vectors
+    during the iterations and the set of points z and the corresponding labels.
+    '''
+    maxPlotLimit = max(np.max(z),np.abs(np.min(z)));
+    maxPlotLimit *= 1.2
+
+    delta = 0.01
+    z1 = z2 = np.arange(-maxPlotLimit, maxPlotLimit, delta)
+    Z1, Z2 = np.meshgrid(z1, z2)
+    Z = np.ones_like(Z1)
+    
+    
+    for r in range(array.shape[0]):
+        matrix, vector=phi(array[r,:],2)
+        
+        for i in range(len(z1)):
+            for j in range(len(z1)):
+                z_i = [z1[i], z2[j]]
+                Z[j][i] = (np.dot(z_i, np.dot(matrix, z_i)) + np.dot(vector, z_i)) - 1
+        
+        #plot level sets
+        if(r==0):
+            ellipse_num=plt.contour(Z1,Z2,Z,0, colors=('k'), linewidths=0.5)
+            path_num=ellipse_num.collections[0].get_paths()[0] 
+            xy_num = path_num.vertices
+        else:
+            plt.contour(Z1,Z2,Z,0, colors=('g'), linewidths=0.5)
+
+    m,v=phi(array[r,:],2)
+        
+    for i in range(len(z1)):
+        for j in range(len(z1)):
+            z_i = [z1[i], z2[j]]
+            Z[j][i] = (np.dot(z_i, np.dot(m, z_i)) + np.dot(v, z_i)) - 1
+    
+    #plot ellipse used for data set creation
+    ellipse=plt.contour(Z1,Z2,Z,0, colors=('r'), linestyles='dashed')    
+    path=ellipse.collections[0].get_paths()[0] 
+    xy = path.vertices
+    
+    
+    
+    x_lim=max(max(abs(xy[:,0])), max(abs(xy_num[:,0])))+0.1
+    y_lim=max(max(abs(xy[:,1])), max(abs(xy_num[:,1])))+0.1
+    plt.xlim(-x_lim, x_lim)
+    plt.ylim(-y_lim, y_lim)
+    
+    #plt.xlim(-maxPlotLimit, maxPlotLimit)
+    #plt.ylim(-maxPlotLimit, maxPlotLimit)
+    plt.xlabel(r'$z_1$')
+    plt.ylabel(r'$z_2$')
 
 
 if __name__ == "__main__":
@@ -282,17 +335,11 @@ if __name__ == "__main__":
             
             plt.figure(1)
             plot_convergence(conv, 'r','error function','numerical error','loglog')
-            #change string to own/ND/PD
-            string="comparison own numerical solution and built-in function \n test data set with exact solution"
-            plt.title(string)
             #plt.savefig('comp_SD_b.png', format='png', transporent=True, bbox_inches='tight', pad_inches=0.005)
             plt.show()
             
             plt.figure(2)
             plot_convergence(conv, 'r','error function','numerical error','plot')
-            #change string to own/ND/PD
-            string="comparison own numerical solution and built-in function \n test data set with exact solution"
-            plt.title(string)
             #plt.savefig('comp_SD_b.png', format='png', transporent=True, bbox_inches='tight', pad_inches=0.005)
             plt.show()
             
@@ -302,9 +349,6 @@ if __name__ == "__main__":
                 stor_f[i]=func_f(x_sol[i])
                 
             plot_convergence(stor_f, 'g','blabla', 'objective function','loglog')
-            #change string to own/ND/PD
-            string="development of objective function \n test data set with exact solution"
-            plt.title(string)
             #plt.savefig('comp_SD_b.png', format='png', transporent=True, bbox_inches='tight', pad_inches=0.005)
             plt.show()
             
@@ -315,9 +359,6 @@ if __name__ == "__main__":
                 stor_f[i]=func_f(x_sol[i])
                 
             plot_convergence(stor_f, 'g','blabla', 'objective function','plot')
-            #change string to own/ND/PD
-            string="development of objective function \n test data set with exact solution"
-            plt.title(string)
             #plt.savefig('comp_SD_b.png', format='png', transporent=True, bbox_inches='tight', pad_inches=0.005)
             plt.show()
             
@@ -325,38 +366,25 @@ if __name__ == "__main__":
 
             plt.figure(5)
             plot_convergence(np.linalg.norm((np.array(x_sol)-my_x), axis=1), 'b','blabla', 'error','loglog')
-            #change string to own/ND/PD
-            string="error exact solution and own numerical solution \n test data set with exact solution"
-            plt.title(string)
             #plt.savefig('comp_SD_b.png', format='png', transporent=True, bbox_inches='tight', pad_inches=0.005)
             plt.show()
             
             plt.figure(6)
             plot_convergence(np.linalg.norm((np.array(x_sol)-my_x), axis=1), 'b','blabla', 'error','plot')
-            #change string to own/ND/PD
-            string="error exact solution and own numerical solution \n test data set with exact solution"
-            plt.title(string)
             #plt.savefig('comp_SD_b.png', format='png', transporent=True, bbox_inches='tight', pad_inches=0.005)
             plt.show()
             
             
-            '''
-            plt.figure(2)
-            plt.plot(np.take(z[0,:],np.where(w==1)[0]),np.take(z[1,:],np.where(w==1)[0]),'ro', alpha=0.5, ms=5)
-            plt.plot(np.take(z[0,:],np.where(w==-1)[0]),np.take(z[1,:],np.where(w==-1)[0]),'bo',alpha=0.5, ms=5)
-            plot_ellipses2(v3,z,w)
-            plt.title('Model 2, steepest descent')
+            
+            plt.figure(7)
+            plt.plot(np.take(z[0,:],np.where(w==1)[0]),np.take(z[1,:],np.where(w==1)[0]),'ro', alpha=0.8, ms=3)
+            plt.plot(np.take(z[0,:],np.where(w==-1)[0]),np.take(z[1,:],np.where(w==-1)[0]),'bo',alpha=0.5, ms=3)
+            plot_ellipses(my_x,np.array(x_sol),z)
+            plt.title('exact solution and convergence to it')
             #plt.savefig('Model2_SD_b.png')
             plt.show()
             
-            plt.figure(3)
-            plt.plot(np.take(z[0,:],np.where(w==1)[0]),np.take(z[1,:],np.where(w==1)[0]),'ro', alpha=0.5, ms=5)
-            plt.plot(np.take(z[0,:],np.where(w==-1)[0]),np.take(z[1,:],np.where(w==-1)[0]),'bo', alpha=0.5, ms=5)
-            plot_ellipses2(v4,z,w)
-            plt.title('Model 2, Gauß-Newton')
-            #plt.savefig('Model2_GN_b.png')
-            plt.show()
-            '''
+           
 
 
 # Abbruch mit lagrangian
