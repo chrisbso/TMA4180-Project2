@@ -479,19 +479,23 @@ if __name__ == "__main__":
     l_min, l_max = .001, 10
     #################################################
 
-    if method == 'own':
+
+    if method == 'own' or method == 'symPts':
         my_x = create_rd_x_initial()
-        A, b = generate_rnd_mx(2, 'own', phi(my_x, 2)[0]), np.random.rand(2)
+        A, b = generate_rnd_mx(2, method, phi(my_x, 2)[0]), np.random.rand(2)
     elif method == 'limit':
         l_min, l_max = .1, .15
         A, b = generate_rnd_mx(2, method, [l_min, l_max]), np.random.rand(2)
     else:
         A, b = generate_rnd_mx(2, method), np.random.rand(2)
 
-    (z, w) = generate_rnd_points_m2(A, b, 200)
-
-    while abs(sum(w)) > 160:
+    if method != 'symPts':
         (z, w) = generate_rnd_points_m2(A, b, 200)
+
+        while abs(sum(w)) > 160:
+            (z, w) = generate_rnd_points_m2(A, b, 200)
+    else:
+        (z,w) = generate_symmetric_points(1)
 
     mu_s, tau_s, tau_f, bd, x = set_parameters_according_to_setting(method, create_rd_x_initial())
 

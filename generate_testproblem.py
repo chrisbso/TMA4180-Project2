@@ -245,7 +245,7 @@ def generate_rnd_mx(*args):
             A = generate_rnd_PD_mx(args[0])
         elif args[1] == 'indef':
             A = generate_rnd_indef_mx(args[0])
-        elif args[1] == 'own' and len(args) == 3:
+        elif (args[1] == 'own' or args[1] == 'symPts') and len(args) == 3:
             A = args[2]
         elif args[1] == "limit" and len(args) == 3:
             A = generate_matrix_limit(args[2])
