@@ -208,13 +208,13 @@ def gauss_newton(initial_data, my, initial_alpha,
         #matrix= np.matmul(np.linalg.inv(np.matmul(J.T,J)), J.T)
         #p=- np.matmul(matrix,r)
         p=np.linalg.solve(np.matmul(J.T,J)+Hess_constr_term(x, my),-(np.matmul(J.T,r)+grad_constr_term(x, my)))
-        print('pfirst')
-        print(p)
+        #print('pfirst')
+        #print(p)
         
         
         p=solve_system(cholesky(np.matmul(J.T,J)+Hess_constr_term(x, my)),-(np.matmul(J.T,r)+grad_constr_term(x, my)))
-        print('psecond')
-        print(p)
+        #print('psecond')
+        #print(p)
               
         # cholesky factorization, change evaluate grad_ri
         alpha=armijo_stepsize_modded(x, my, p, delta=.75, gamma=1, beta=.5)
@@ -242,8 +242,7 @@ def cholesky(matrix):
     return G
 
 def solve_system(cholesky, vector):
-    print(len(vector))
-    print(cholesky[0])
+    
     n=len(vector)
     y=np.zeros(n)
     sol=np.zeros(n)
