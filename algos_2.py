@@ -182,7 +182,15 @@ def gauss_newton(initial_data, my, initial_alpha,
                 
         matrix= np.matmul(np.linalg.inv(np.matmul(J.T,J)), J.T)
         p=- np.matmul(matrix,r)
+        p=np.linalg.solve(np.matmul(J.T,J),-np.matmul(J.T,r))
+        print('pfirst')
+        print(p)
         
+        
+        #p=solve_system(cholesky(np.matmul(J.T,J)),-np.matmul(J.T,r))
+        
+        #print('psecond')
+        #print(p)
               
         # cholesky factorization, change evaluate grad_ri
         alpha=armijo_stepsize_modded(x, my, p, delta=.75, gamma=1, beta=.5)
@@ -192,7 +200,45 @@ def gauss_newton(initial_data, my, initial_alpha,
         k += 1
     return x, [my/c_i(x) for c_i in constraints()]
 
+def cholesky(matrix):
+    n = matrix.shape[0]
+    G = np.zeros((n,n))
+    for k in range(0,n):
+         # compute diagonal entry
+         G[k,k] = matrix[k,k]
+         for j in range(0,k):
+             G[k,k] = G[k,k] - G[k,j]*G[k,j]
+         G[k,k] = np.sqrt(G[k,k])
+         # compute remaining column
+         for i in range(k+1,n):
+             G[i,k] = matrix[i,k]
+             for j in range(0,k):
+                 G[i,k] = G[i,k] - G[i,j]*G[k,j]
+             G[i,k] = G[i,k] / G[k,k]
+    return G
 
+def solve_system(cholesky, vector):
+    n=len(vector)
+    y=np.zeros(n)
+    sol=np.zeros(n)
+    
+    y[0]=vector[0]/cholesky[0,0]
+    for i in range(1,n,1):
+        sum=0
+        for j in range(0,i+1):
+            sum+=cholesky[i,j]*vector[j]
+        y[i]=(vector[i]-sum)/cholesky[i,i]
+        
+    R=cholesky.T
+    sol[n-1]=y[n-1]/R[n-1,n-1]
+    for i in range(n-2,-1,-1):
+        sum=0
+        for j in range(i+1,n,1):
+            sum+=R[i,j]*sol[j]
+        sol[i]=(y[i]-sum)/R[i,i]
+    return sol
+    
+        
 
 def armijo_stepsize_modded(x_old, my,  d, delta=.75, gamma=1, beta=.5):
 
@@ -371,6 +417,7 @@ if __name__ == "__main__":
     if method == 'own':
         my_x = create_rd_x_initial()
         A, b = generate_rnd_mx(2, 'own', phi(my_x, 2)[0]), np.random.rand(2)
+       
     else:
         A, b = generate_rnd_mx(2, method), np.random.rand(2)
 
