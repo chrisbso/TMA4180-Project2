@@ -457,7 +457,7 @@ if __name__ == "__main__":
     #################################################
     plots_on = True
 
-    method ='indef' # either own, indef, PD
+    method ='limit' # either own, indef, PD, limit
 
     p_solver = 'SD' # either SD or GN
 
@@ -467,7 +467,9 @@ if __name__ == "__main__":
     if method == 'own':
         my_x = create_rd_x_initial()
         A, b = generate_rnd_mx(2, 'own', phi(my_x, 2)[0]), np.random.rand(2)
-       
+    elif method == 'limit':
+        l_min, l_max = .1, .15
+        A, b = generate_rnd_mx(2, method, [l_min, l_max]), np.random.rand(2)
     else:
         A, b = generate_rnd_mx(2, method), np.random.rand(2)
 
