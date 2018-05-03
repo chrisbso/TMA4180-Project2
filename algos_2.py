@@ -496,7 +496,7 @@ if __name__ == "__main__":
     l_min, l_max = .001, 10
     #################################################
 
-
+    #switch case for generating different points/starting ellipsoids
     if method == 'own' or method == 'symPts':
         my_x = create_rd_x_initial()
         A, b = generate_rnd_mx(2, method, phi(my_x, 2)[0]), np.random.rand(2)
