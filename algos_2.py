@@ -156,23 +156,22 @@ def phi_inv(matrix, vector):
     return x_vector
 
 
-def steepest_descent(bound, x, my):
+def steepest_descent(bound, x, mu, k=0):
 
-    while np.linalg.norm(grad_P(x, my), 2) > bound:
+    while np.linalg.norm(grad_P(x, mu), 2) > bound:
 
-        direction = -grad_P(x, my)
+        direction = -grad_P(x, mu)
 
-        #print([c_i(x+direction) for c_i in constraints()])
-
-        alpha = armijo_stepsize_modded(x, my, direction)
+        alpha = armijo_stepsize_modded(x, mu, direction)
 
         x += alpha * direction
 
-        #print(np.linalg.norm(grad_P(x, my), 2), np.linalg.norm(grad_f(x),2), alpha, np.linalg.norm([sum([gc_i(x)[q]*(1/c_i(x)) for gc_i, c_i in zip(gradconstraints(), constraints())]) for q in range(5)]))
+        k += 1
 
+        if k % 100 == 1:
+            print(x)
 
-
-    return x, [my/c_i(x) for c_i in constraints()]
+    return x, [mu/c_i(x) for c_i in constraints()]
 
 def gauss_newton(initial_data, my, initial_alpha,
                   bound,z, w):
@@ -212,7 +211,7 @@ def gauss_newton(initial_data, my, initial_alpha,
         #print(p)
         
         
-        p=solve_system(cholesky(np.matmul(J.T,J)+Hess_constr_term(x, my)),-(np.matmul(J.T,r)+grad_constr_term(x, my)))
+        #p=solve_system(cholesky(np.matmul(J.T,J)+Hess_constr_term(x, my)),-(np.matmul(J.T,r)+grad_constr_term(x, my)))
         #print('psecond')
         #print(p)
               
@@ -223,6 +222,7 @@ def gauss_newton(initial_data, my, initial_alpha,
         A,vec=phi(x,2)
         k += 1
     return x, [my/c_i(x) for c_i in constraints()]
+
 
 def cholesky(matrix):
     n = matrix.shape[0]
@@ -241,7 +241,8 @@ def cholesky(matrix):
              G[i,k] = G[i,k] / G[k,k]
     return G
 
-def solve_system(cholesky, vector):
+
+def solve_system(cholesky, vector): # name shadows function
     
     n=len(vector)
     y=np.zeros(n)
@@ -262,8 +263,7 @@ def solve_system(cholesky, vector):
             summation+=R[i,j]*sol[j]
         sol[i]=(y[i]-summation)/R[i,i]
     return sol
-    
-        
+
 
 def armijo_stepsize_modded(x_old, my,  d, delta=.75, gamma=1, beta=.5):
 
@@ -285,43 +285,71 @@ def armijo_stepsize_modded(x_old, my,  d, delta=.75, gamma=1, beta=.5):
     return sigma
 
 
-def tau(n): return .5**n * 10**3
+def set_parameters_according_to_setting(method, x_init):
+
+    if method == 'own':
+        mu_start = .01
+        tau_start = np.linalg.norm((1/2)*grad_f(x_init))
+        tau_parameter = .5
+        termination_crit = 10**-3
+    elif method == 'PD':
+        mu_start = .1
+        tau_start = np.linalg.norm((2/3)*grad_f(x_init))
+        tau_parameter = 2/3
+        termination_crit = np.linalg.norm(grad_f(x_init))*.01
+    elif method == 'indef':
+        mu_start = .1
+        tau_start = np.linalg.norm((2/3)*grad_f(x_init))
+        tau_parameter = 2/3
+        termination_crit = np.linalg.norm(grad_f(x_init))* .01
+    else:
+        print('here is something to fix')
+        mu_start = .1
+        tau_start = np.linalg.norm((2/3)*grad_f(x_init))
+        tau_parameter = 2/3
+        termination_crit = np.linalg.norm(grad_f(x_init)) * .01
+
+    return  mu_start, tau_start, tau_parameter, termination_crit, x_init
 
 
-def barrier_method(my, x_init, bound, k=1):
+def barrier_method(mu, x_init, bound, tau, fac, solver_type):
 
-    x_good_sol = call_for_help(bound, x_init)
+    if True:
+        x_good_sol = call_for_help(bound, x_init)
 
-    conv_in_f = [abs(func_f(x_good_sol)-func_f(x_init))]
+        conv_in_f = [abs(func_f(x_good_sol)-func_f(x_init))]
 
-    x_storage = [np.array(x_init)]
+        x_storage = [np.array(x_init)]
 
-    t_storage = [1]
+        t_storage = [1]
 
-    l = [my/c_i(x_init) for c_i in constraints()]
+        l = [mu/c_i(x_init) for c_i in constraints()]
 
     while np.linalg.norm(grad_lagrangian(x_init, l), 2) > bound:
         # feasible starting point, that is updated
 
-        #x_init, l = steepest_descent(tau(k), x_init, my)
-        
+        if solver_type == 'SD':
+            x_init, l = steepest_descent(tau, x_init, mu)
+        elif solver_type == 'GN':
+            x_init, l = gauss_newton(x_init, mu, 20, tau, z, w)
+        else:
+            print('Invalid solver chosen')
+            return x_storage, conv_in_f, t_storage # here maybe error
         #change initial alpha=20
-        x_init, l = gauss_newton(x_init, my, 20, tau(k),z, w)
 
-        my *= .5
-        k += 1
+        mu *= .6
+        tau *= fac
 
-        #error development array
-        conv_in_f.append(abs(func_f(x_good_sol)-func_f(x_init)))
-        # development of x array
+        if True:
+            #error development array
+            conv_in_f.append(abs(func_f(x_good_sol)-func_f(x_init)))
+            # development of x array
+            x_storage.append(np.array(x_init))
+            # development of tau array
+            t_storage.append(tau)
 
-        x_storage.append(np.array(x_init))
-        #x_storage=np.concatenate((x_storage, x_init.reshape((1, len(x_init)))), axis=0)
-        # development of tau array
-        t_storage.append(tau(k))
-
-        #print(x_init)
-        print('\n ---------------------------------------------')
+        print(x_init)
+        print('---------------------------------------------')
 
     return x_storage, conv_in_f, t_storage
 
@@ -420,44 +448,37 @@ def plot_ellipses(creation, array,z):
 
 
 if __name__ == "__main__":
-
+    global z, w, l_min, l_max
     '''
     set plots_on True if you want to see the plots. For saving computational
     time, use False.
     '''
 
+    #################################################
     plots_on = True
 
-    method ='own' # either own, indef, PD
+    method ='indef' # either own, indef, PD
 
-    global z, w, l_min, l_max
+    p_solver = 'SD' # either SD or GN
 
-    l_min = 0.001
-    l_max = 5
-
-    termination_crit = 10**-3
-
+    l_min, l_max = .001, 10
     #################################################
 
     if method == 'own':
         my_x = create_rd_x_initial()
-        A, b = generate_rnd_mx(2, method, phi(my_x, 2)[0]), np.random.rand(2)
-    elif method == 'limit':
-        A, b = generate_rnd_mx(2, method, np.array([l_min,l_max])), np.random.rand(2)
+        A, b = generate_rnd_mx(2, 'own', phi(my_x, 2)[0]), np.random.rand(2)
+       
     else:
         A, b = generate_rnd_mx(2, method), np.random.rand(2)
-
 
     (z, w) = generate_rnd_points_m2(A, b, 200)
 
     while abs(sum(w)) > 160:
         (z, w) = generate_rnd_points_m2(A, b, 200)
 
+    mu_s, tau_s, tau_f, bd, x = set_parameters_according_to_setting(method, create_rd_x_initial())
 
-    x_sol, conv, t = barrier_method(1, create_rd_x_initial(), termination_crit)
-
-
-
+    x_sol, conv, t = barrier_method(mu_s, x, bd, tau_s, tau_f, p_solver)
 
     if(plots_on):
             #first figure
