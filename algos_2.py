@@ -39,7 +39,8 @@ def gradc4(x): return [0, 0, -1, 0, 0]
 def gradc5(x): return [.5*((x[0]*x[2])**(-.5))*x[2], x[1]*(l_min**2+x[1]**2)**(-.5), .5*((x[0]*x[2])**(-.5))*x[0], 0, 0]
 
 
-def hessc5(x): 
+def hessc5(x):
+    ''' Generates the Hessian of constraint c_5'''
     hess=np.zeros((5,5))
     hess[0,0]=0.25*(x[2]**2)*(x[0]*x[2])**(-1.5)
     hess[1,1]=(l_min**2)*(x[1]**2+l_min**2)**(-1.5)
@@ -49,14 +50,18 @@ def hessc5(x):
     return hess
 
 
-def hessc1(x): 
+def hessc1(x):
+    ''' Generates the Hessian of constraint c_1 to c_4'''
     return np.zeros((5,5))
 
 
-def gradconstraints(): return [gradc1, gradc2, gradc3, gradc4, gradc5]
+def gradconstraints():
+    ''' Generates an array of all gradients of the constraints'''
+    return [gradc1, gradc2, gradc3, gradc4, gradc5]
 
 
 def Hessconstraints():
+    ''' Generates an array of all Hessians of the constraints'''
     return [hessc1, hessc1, hessc1, hessc1, hessc5]
 
 
@@ -79,10 +84,12 @@ def grad_P(v_1, v_2):
 
 
 def grad_constr_term(v_1, v_2):
-     return - v_2 * np.array([sum([gc_i(v_1)[q]*(1/c_i(v_1)) for gc_i, c_i in zip(gradconstraints(), constraints())]) for q in range(5)])
+    ''' gradient of the term with mu and the constraints in P'''
+    return - v_2 * np.array([sum([gc_i(v_1)[q]*(1/c_i(v_1)) for gc_i, c_i in zip(gradconstraints(), constraints())]) for q in range(5)])
 
 
 def Hess_constr_term(v_1, v_2):
+    ''' Hessian of the term with mu and the constraints in P using quotient rule'''
     summation=0
     const=constraints()
     grad=gradconstraints()
@@ -189,10 +196,11 @@ def steepest_descent(bound, x, mu, k=0):
 def gauss_newton(initial_data, my, initial_alpha,
                   bound,z, w):
     
-    '''Gauss-Newton algorithm for model 2. Uses other residuals.
-    Takes an argument 'plot_boolean' which states if the history of values
-    needed for plotting shall be stored or not.
-    Gives back x-vector that minimizes f and two parameters needed for plotting.
+    '''Gauss-Newton algorithm. Uses the mapping P with the residuals and a term
+    with the constraints. Approximates grad f and f'' and uses the exact gradient
+    and Hessian of the term with the constraints. Uses cholesky factorization 
+    to solve system of equations.
+    Gives back x-vector that minimizes P.
     '''
     
     m = z.shape[1]
@@ -205,9 +213,7 @@ def gauss_newton(initial_data, my, initial_alpha,
   
     A,vec=phi(x,2)
     
-    #print(grad_P(x, my))
-    #print(grad_f(x))
-   
+    
     # tolerance
     while (np.linalg.norm(grad_P(x, my), 2)>bound): 
                         
@@ -216,21 +222,20 @@ def gauss_newton(initial_data, my, initial_alpha,
             w_i = w[i]
             J[i,:]=w_i*evaluate_grad_r_i_m2(z_i,A)
             r[i]=evaluate_r_i_m2(z_i,w_i,A,vec)
-                
-        #matrix= np.matmul(np.linalg.inv(np.matmul(J.T,J)), J.T)
-        #p=- np.matmul(matrix,r)
-        #p=np.linalg.solve(np.matmul(J.T,J)+Hess_constr_term(x, my),-(np.matmul(J.T,r)+grad_constr_term(x, my)))
-        #print('pfirst')
-        #print(p)
-        
-        
+        '''        
+        # to check if our p is correct
+        p=np.linalg.solve(np.matmul(J.T,J)+Hess_constr_term(x, my),-(np.matmul(J.T,r)+grad_constr_term(x, my)))
+        print('pfirst')
+        print(p)
+        '''
+        # new direction
         p=solve_system(cholesky(np.matmul(J.T,J)+Hess_constr_term(x, my)),-(np.matmul(J.T,r)+grad_constr_term(x, my)))
         #print('psecond')
         #print(p)
               
-        # cholesky factorization, change evaluate grad_ri
+        # new stepsize
         alpha=armijo_stepsize_modded(x, my, p, delta=.75, gamma=1, beta=.5)
-        
+        #new solution 
         x= x+ alpha*p
         A,vec=phi(x,2)
         k += 1
@@ -238,6 +243,9 @@ def gauss_newton(initial_data, my, initial_alpha,
 
 
 def cholesky(matrix):
+    '''Cholesky factorization of a matrix producing the lower diagonal matrix G,
+    such that G^T*G=matrix.
+    '''
     n = matrix.shape[0]
     G = np.zeros((n,n))
     for k in range(0,n):
@@ -246,7 +254,7 @@ def cholesky(matrix):
          for j in range(0,k):
              G[k,k] = G[k,k] - G[k,j]*G[k,j]
          G[k,k] = np.sqrt(G[k,k])
-         # compute remaining column
+         # compute column
          for i in range(k+1,n):
              G[i,k] = matrix[i,k]
              for j in range(0,k):
@@ -256,18 +264,22 @@ def cholesky(matrix):
 
 
 def solve_system(cholesky, vector):
-    
+    '''Solve system of equations using the matrix from the cholesky factorization
+    and by forward and backward iteration. Returns the solution of the equation.
+    '''
     n=len(vector)
     y=np.zeros(n)
     sol=np.zeros(n)
     
+    #forward
     y[0]=vector[0]/cholesky[0,0]
     for i in range(1,n,1):
         summation=0
         for j in range(0,i):
             summation+=cholesky[i,j]*y[j]
         y[i]=(vector[i]-summation)/cholesky[i,i]
-        
+    
+    #backward
     R=cholesky.T
     sol[n-1]=y[n-1]/R[n-1,n-1]
     for i in range(n-2,-1,-1):
@@ -385,7 +397,8 @@ def call_for_help(bound, x_input):
 
 
 def plot_convergence(conv_1, color_1, label1, y_axis, kind_of_plotting):
-    '''Creates convergence plots over iterations.
+    '''Creates convergence plots over iterations. Chose y_axis label and 
+    the kind of plottinf scale (normal or loglog).
     '''
     n=len(conv_1)
     grid = np.arange(0,n,1)
@@ -410,8 +423,9 @@ def plot_convergence(conv_1, color_1, label1, y_axis, kind_of_plotting):
 
 
 def plot_ellipses(creation, array,z):
-    ''' Plots the ellipses of model 2. Takes an array with the stored x-vectors
-    during the iterations and the set of points z and the corresponding labels.
+    ''' Plots the ellipses. Takes an an array with the parameters used for 
+    creating the data set and an array with the stored x-vectors (solutions)
+    during the iterations and the set of points z.
     '''
     maxPlotLimit = max(np.max(z),np.abs(np.min(z)));
     maxPlotLimit *= 1.2
@@ -421,7 +435,7 @@ def plot_ellipses(creation, array,z):
     Z1, Z2 = np.meshgrid(z1, z2)
     Z = np.ones_like(Z1)
 
-
+    # plots solution development
     for r in range(array.shape[0]):
         matrix, vector=phi(array[r,:],2)
 
@@ -438,7 +452,9 @@ def plot_ellipses(creation, array,z):
         else:
             plt.contour(Z1,Z2,Z,0, colors=('g'), linewidths=0.3)
 
-    m,v=phi(array[r,:],2)
+    # plots red dashed curve, used for creating the data points
+    m,v=phi(creation,2)
+    #m,v=phi(array[r,:],2)
 
     for i in range(len(z1)):
         for j in range(len(z1)):
@@ -451,7 +467,7 @@ def plot_ellipses(creation, array,z):
     xy = path.vertices
 
 
-
+    # set limit according to ellipse size
     x_lim=max(max(abs(xy[:,0])), max(abs(xy_num[:,0])))+0.1
     y_lim=max(max(abs(xy[:,1])), max(abs(xy_num[:,1])))+0.1
     plt.xlim(-x_lim, x_lim)
@@ -471,11 +487,11 @@ if __name__ == "__main__":
     '''
 
     #################################################
-    plots_on = True
+    plots_on = True # either True or False
 
-    method ='indef' # either own, indef, PD, limit
+    method ='own' # either own, indef, PD, symPts
 
-    p_solver = 'SD' # either SD or GN
+    p_solver = 'GN' # either SD or GN
 
     l_min, l_max = .001, 10
     #################################################
@@ -502,9 +518,11 @@ if __name__ == "__main__":
 
     x_sol, conv, t = barrier_method(mu_s, x, bd, tau_s, tau_f, p_solver)
 
-    if(plots_on):
-            #first figure
 
+    # create plots
+    if(plots_on):
+           
+            #numerical error between solution of built-in and our solution
             plt.figure(1)
             plot_convergence(conv, 'r','error function','numerical error','loglog')
             #plt.savefig('comp_SD_b.png', format='png', transporent=True, bbox_inches='tight', pad_inches=0.005)
@@ -514,7 +532,8 @@ if __name__ == "__main__":
             plot_convergence(conv, 'r','error function','numerical error','plot')
             #plt.savefig('comp_SD_b.png', format='png', transporent=True, bbox_inches='tight', pad_inches=0.005)
             plt.show()
-
+            
+            #development of objective function
             plt.figure(3)
             stor_f=np.zeros(len(x_sol))
             for i in range(len(x_sol)):
@@ -535,7 +554,7 @@ if __name__ == "__main__":
             plt.show()
 
             if(method=='own'):
-
+                # error between our solution and the x-Vector used for creating the data set
                 plt.figure(5)
                 plot_convergence(np.linalg.norm((np.array(x_sol)-phi_inv(A, b)), axis=1), 'b','blabla', 'error','loglog')
                 #plt.savefig('comp_SD_b.png', format='png', transporent=True, bbox_inches='tight', pad_inches=0.005)
@@ -546,7 +565,9 @@ if __name__ == "__main__":
                 #plt.savefig('comp_SD_b.png', format='png', transporent=True, bbox_inches='tight', pad_inches=0.005)
                 plt.show()
 
-
+                '''ellipse in black and green that represent development of our
+                solution and the red dashed curve represents the curve used for
+                data set creation.'''
                 plt.figure(7)
                 plt.plot(np.take(z[0,:],np.where(w==1)[0]),np.take(z[1,:],np.where(w==1)[0]),'ro', alpha=0.8, ms=3)
                 plt.plot(np.take(z[0,:],np.where(w==-1)[0]),np.take(z[1,:],np.where(w==-1)[0]),'bo',alpha=0.5, ms=3)
@@ -556,6 +577,9 @@ if __name__ == "__main__":
                 plt.show()
 
             else:
+                '''ellipse in black and green that represent development of our
+                solution and the red dashed curve represents the curve used for
+                data set creation.'''
                 plt.figure(8)
                 plt.plot(np.take(z[0,:],np.where(w==1)[0]),np.take(z[1,:],np.where(w==1)[0]),'ro', alpha=0.8, ms=3)
                 plt.plot(np.take(z[0,:],np.where(w==-1)[0]),np.take(z[1,:],np.where(w==-1)[0]),'bo',alpha=0.5, ms=3)
