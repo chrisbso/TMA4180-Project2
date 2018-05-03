@@ -206,12 +206,12 @@ def gauss_newton(initial_data, my, initial_alpha,
                 
         #matrix= np.matmul(np.linalg.inv(np.matmul(J.T,J)), J.T)
         #p=- np.matmul(matrix,r)
-        p=np.linalg.solve(np.matmul(J.T,J)+Hess_constr_term(x, my),-(np.matmul(J.T,r)+grad_constr_term(x, my)))
+        #p=np.linalg.solve(np.matmul(J.T,J)+Hess_constr_term(x, my),-(np.matmul(J.T,r)+grad_constr_term(x, my)))
         #print('pfirst')
         #print(p)
         
         
-        #p=solve_system(cholesky(np.matmul(J.T,J)+Hess_constr_term(x, my)),-(np.matmul(J.T,r)+grad_constr_term(x, my)))
+        p=solve_system(cholesky(np.matmul(J.T,J)+Hess_constr_term(x, my)),-(np.matmul(J.T,r)+grad_constr_term(x, my)))
         #print('psecond')
         #print(p)
               
@@ -242,7 +242,7 @@ def cholesky(matrix):
     return G
 
 
-def solve_system(cholesky, vector): # name shadows function
+def solve_system(cholesky, vector):
     
     n=len(vector)
     y=np.zeros(n)
@@ -251,8 +251,8 @@ def solve_system(cholesky, vector): # name shadows function
     y[0]=vector[0]/cholesky[0,0]
     for i in range(1,n,1):
         summation=0
-        for j in range(0,i+1):
-            summation+=cholesky[i,j]*vector[j]
+        for j in range(0,i):
+            summation+=cholesky[i,j]*y[j]
         y[i]=(vector[i]-summation)/cholesky[i,i]
         
     R=cholesky.T
