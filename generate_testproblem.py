@@ -247,8 +247,10 @@ def generate_rnd_mx(*args):
             A = generate_rnd_indef_mx(args[0])
         elif args[1] == 'own' and len(args) == 3:
             A = args[2]
+        elif args[1] == "limit" and len(args) == 3:
+            A = generate_matrix_limit(args[2])
         else:
-            raise ValueError('generate_rnd_mx(): "str" is either "PD", "indef" or "own". "own" requires a third arguement (your desired function). Try again.')
+            raise ValueError('generate_rnd_mx(): "str" is either "PD", "indef", "own" or "limit. "limit and "own" require a third arguement. Try again.')
     else:
          raise ValueError('"str" must be a string. Try again.')
     return A
@@ -268,15 +270,27 @@ def generate_rnd_indef_mx(n):
         A[0,0] = -abs(A[0,0]) - abs(A[0,1])
         A[1,1] = abs(A[1,1]) + abs(A[1,0])
     return A
-'''
-def generate_rnd_ND_mx(n):
-    A = np.random.rand(n, n)
-    A = (A+A.transpose())/1
-    A = A - 1.3*np.max(np.linalg.eigvals(A))*np.eye(2) #Make our matrix ND
-    print(A)
-    print(np.linalg.det(A))
-    print(np.linalg.eigvals(A))
-    return A
-'''
+
+def generate_symmetric_points(a):
+    w = np.ones(5)
+    w[0] = -1 #we don't want the middle point in.
+    z = np.zeros([2,5]);
+    z[:,0] = [0,0] #middle
+    z[:,1] = [a,0] #east
+    z[:,2] = [-a,0]#west
+    z[:,3] = [0,a] #north
+    z[:,4] = [0,-a]#south
+    return z,w
+
+def generate_matrix_limit(lambdas):
+    deltaMax = lambdas[1] - lambdas[0];
+    z = np.random.rand(3);
+    A11 = z[0]*deltaMax
+    A22 = z[1]*deltaMax
+    A12 = (2*z[2]-1)*np.sqrt(2*lambdas[0]*deltaMax+deltaMax^2)
+    return np.array[[A11,A12],[A12,A22]]
+
+
+
 
 

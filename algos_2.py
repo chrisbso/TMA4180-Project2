@@ -432,7 +432,7 @@ if __name__ == "__main__":
 
     global z, w, l_min, l_max
 
-    l_min = 0.1
+    l_min = 0.0001
     l_max = 10
 
     termination_crit = 10**-3
