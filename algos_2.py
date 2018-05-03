@@ -38,6 +38,7 @@ def gradc4(x): return [0, 0, -1, 0, 0]
 
 def gradc5(x): return [.5*((x[0]*x[2])**(-.5))*x[2], x[1]*(l_min**2+x[1]**2)**(-.5), .5*((x[0]*x[2])**(-.5))*x[0], 0, 0]
 
+
 def hessc5(x): 
     hess=np.zeros((5,5))
     hess[0,0]=0.25*(x[2]**2)*(x[0]*x[2])**(-1.5)
@@ -46,8 +47,11 @@ def hessc5(x):
     hess[2,0]=hess[0,2]
     return hess
 
+
 def hessc1(x): 
     return np.zeros((5,5))
+
+
 def gradconstraints(): return [gradc1, gradc2, gradc3, gradc4, gradc5]
 
 
@@ -72,8 +76,10 @@ def func_P(v_1, v_2):
 def grad_P(v_1, v_2):
     return grad_f(v_1) - v_2 * np.array([sum([gc_i(v_1)[q]*(1/c_i(v_1)) for gc_i, c_i in zip(gradconstraints(), constraints())]) for q in range(5)])
 
+
 def grad_constr_term(v_1, v_2):
      return - v_2 * np.array([sum([gc_i(v_1)[q]*(1/c_i(v_1)) for gc_i, c_i in zip(gradconstraints(), constraints())]) for q in range(5)])
+
 
 def Hess_constr_term(v_1, v_2):
     summation=0
@@ -84,6 +90,7 @@ def Hess_constr_term(v_1, v_2):
     for i in range(5):
         summation+= const[i](v_1)*hess[i](v_1)-np.dot(np.array([grad[i](v_1)]).T, np.array([grad[i](v_1)]))
     return - v_2 * summation
+
 
 def lagrangian(x,lam):
     return func_f(x) + sum([l_i *c_i(x) for l_i, c_i in zip(lam,constraints())])
@@ -96,8 +103,8 @@ def grad_lagrangian(x,lam):
 def create_rd_x_initial():
     x = np.random.rand(5)
     x[0] = x[0] * (l_max - l_min) + l_min
-    x[1] += -1
     x[2] = x[2] * (l_max - l_min) + l_min
+    x[1] = x[1] * ((x[0]*x[2] - l_min**2)**.5)
     return x
 
 
@@ -168,10 +175,15 @@ def steepest_descent(bound, x, mu, k=0):
 
         k += 1
 
-        if k % 100 == 1:
+        if k % 100 == 0:
+            temp = list(x)
             print(x)
+            if x[0] == temp[0]:
+                print(':-(')
+
 
     return x, [mu/c_i(x) for c_i in constraints()]
+
 
 def gauss_newton(initial_data, my, initial_alpha,
                   bound,z, w):
@@ -325,6 +337,9 @@ def barrier_method(mu, x_init, bound, tau, fac, solver_type):
 
         l = [mu/c_i(x_init) for c_i in constraints()]
 
+        print(x_good_sol)
+        print('++++++++++++++++++++++++++++++++++++++++')
+
     while np.linalg.norm(grad_lagrangian(x_init, l), 2) > bound:
         # feasible starting point, that is updated
 
@@ -363,7 +378,7 @@ def call_for_help(bound, x_input):
 
     func_mod = lambda x, z, w: evaluate_f_m2(z, w, phi(x,2)[0], phi(x,2)[1])
 
-    result = scipy.optimize.minimize(func_mod, x_input, (z,w), constraints=cons, tol=bound)
+    result = scipy.optimize.minimize(func_mod, x_input, (z,w), constraints=cons, tol=bound, method='SLSQP')
 
     return result.x
 
@@ -457,7 +472,7 @@ if __name__ == "__main__":
     #################################################
     plots_on = True
 
-    method ='limit' # either own, indef, PD, limit
+    method ='indef' # either own, indef, PD, limit
 
     p_solver = 'SD' # either SD or GN
 
@@ -542,6 +557,3 @@ if __name__ == "__main__":
                 plot_ellipses(phi_inv(A, b),np.array(x_sol),z)
                 #plt.savefig('Model2_SD_b.png')
                 plt.show()
-
-
-
