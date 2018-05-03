@@ -38,8 +38,21 @@ def gradc4(x): return [0, 0, -1, 0, 0]
 
 def gradc5(x): return [.5*((x[0]*x[2])**(-.5))*x[2], x[1]*(l_min**2+x[1]**2)**(-.5), .5*((x[0]*x[2])**(-.5))*x[0], 0, 0]
 
+def hessc5(x): 
+    hess=np.zeros((5,5))
+    hess[0,0]=0.25*(x[2]**2)*(x[0]*x[2])**(-1.5)
+    hess[2,2]=0.25*(x[0]**2)*(x[0]*x[2])**(-1.5)
+    hess[0,2]=-0.25*(x[0]*x[2])**(-0.5)
+    hess[2,0]=hess[0,2]
+    return hess
 
+def hessc1(x): 
+    return np.zeros((5,5))
 def gradconstraints(): return [gradc1, gradc2, gradc3, gradc4, gradc5]
+
+
+def Hessconstraints():
+    return [hessc1, hessc1, hessc1, hessc1, hessc5]
 
 
 def func_f(x):
@@ -59,6 +72,18 @@ def func_P(v_1, v_2):
 def grad_P(v_1, v_2):
     return grad_f(v_1) - v_2 * np.array([sum([gc_i(v_1)[q]*(1/c_i(v_1)) for gc_i, c_i in zip(gradconstraints(), constraints())]) for q in range(5)])
 
+def grad_constr_term(v_1, v_2):
+     return - v_2 * np.array([sum([gc_i(v_1)[q]*(1/c_i(v_1)) for gc_i, c_i in zip(gradconstraints(), constraints())]) for q in range(5)])
+
+def Hess_constr_term(v_1, v_2):
+    summation=0
+    const=constraints()
+    grad=gradconstraints()
+    hess=Hessconstraints()
+    
+    for i in range(5):
+        summation+= const[i](v_1)*hess[i](v_1)-np.dot(np.array([grad[i](v_1)]).T, np.array([grad[i](v_1)]))
+    return - v_2 * summation
 
 def lagrangian(x,lam):
     return func_f(x) + sum([l_i *c_i(x) for l_i, c_i in zip(lam,constraints())])
@@ -168,8 +193,8 @@ def gauss_newton(initial_data, my, initial_alpha,
   
     A,vec=phi(x,2)
     
-    print(grad_P(x, my))
-    print(grad_f(x))
+    #print(grad_P(x, my))
+    #print(grad_f(x))
    
     # tolerance
     while (np.linalg.norm(grad_P(x, my), 2)>bound): 
@@ -180,17 +205,16 @@ def gauss_newton(initial_data, my, initial_alpha,
             J[i,:]=w_i*evaluate_grad_r_i_m2(z_i,A)
             r[i]=evaluate_r_i_m2(z_i,w_i,A,vec)
                 
-        matrix= np.matmul(np.linalg.inv(np.matmul(J.T,J)), J.T)
-        p=- np.matmul(matrix,r)
-        p=np.linalg.solve(np.matmul(J.T,J),-np.matmul(J.T,r))
+        #matrix= np.matmul(np.linalg.inv(np.matmul(J.T,J)), J.T)
+        #p=- np.matmul(matrix,r)
+        p=np.linalg.solve(np.matmul(J.T,J)+Hess_constr_term(x, my),-(np.matmul(J.T,r)+grad_constr_term(x, my)))
         print('pfirst')
         print(p)
         
         
-        #p=solve_system(cholesky(np.matmul(J.T,J)),-np.matmul(J.T,r))
-        
-        #print('psecond')
-        #print(p)
+        p=solve_system(cholesky(np.matmul(J.T,J)+Hess_constr_term(x, my)),-(np.matmul(J.T,r)+grad_constr_term(x, my)))
+        print('psecond')
+        print(p)
               
         # cholesky factorization, change evaluate grad_ri
         alpha=armijo_stepsize_modded(x, my, p, delta=.75, gamma=1, beta=.5)
@@ -218,24 +242,26 @@ def cholesky(matrix):
     return G
 
 def solve_system(cholesky, vector):
+    print(len(vector))
+    print(cholesky[0])
     n=len(vector)
     y=np.zeros(n)
     sol=np.zeros(n)
     
     y[0]=vector[0]/cholesky[0,0]
     for i in range(1,n,1):
-        sum=0
+        summation=0
         for j in range(0,i+1):
-            sum+=cholesky[i,j]*vector[j]
-        y[i]=(vector[i]-sum)/cholesky[i,i]
+            summation+=cholesky[i,j]*vector[j]
+        y[i]=(vector[i]-summation)/cholesky[i,i]
         
     R=cholesky.T
     sol[n-1]=y[n-1]/R[n-1,n-1]
     for i in range(n-2,-1,-1):
-        sum=0
+        summation=0
         for j in range(i+1,n,1):
-            sum+=R[i,j]*sol[j]
-        sol[i]=(y[i]-sum)/R[i,i]
+            summation+=R[i,j]*sol[j]
+        sol[i]=(y[i]-summation)/R[i,i]
     return sol
     
         
