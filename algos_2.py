@@ -143,11 +143,55 @@ def steepest_descent(bound, x, my):
 
         x += alpha * direction
 
-        print(np.linalg.norm(grad_P(x, my), 2), np.linalg.norm(grad_f(x),2), alpha, np.linalg.norm([sum([gc_i(x)[q]*(1/c_i(x)) for gc_i, c_i in zip(gradconstraints(), constraints())]) for q in range(5)]))
+        #print(np.linalg.norm(grad_P(x, my), 2), np.linalg.norm(grad_f(x),2), alpha, np.linalg.norm([sum([gc_i(x)[q]*(1/c_i(x)) for gc_i, c_i in zip(gradconstraints(), constraints())]) for q in range(5)]))
 
 
 
     return x, [my/c_i(x) for c_i in constraints()]
+
+def gauss_newton(initial_data, my, initial_alpha,
+                  bound,z, w):
+    
+    '''Gauss-Newton algorithm for model 2. Uses other residuals.
+    Takes an argument 'plot_boolean' which states if the history of values
+    needed for plotting shall be stored or not.
+    Gives back x-vector that minimizes f and two parameters needed for plotting.
+    '''
+    
+    m = z.shape[1]
+    k=0
+    x= initial_data
+    alpha=initial_alpha
+        
+    J=np.zeros((m,len(x)))
+    r=np.zeros(m)
+  
+    A,vec=phi(x,2)
+    
+    print(grad_P(x, my))
+    print(grad_f(x))
+   
+    # tolerance
+    while (np.linalg.norm(grad_P(x, my), 2)>bound): 
+                        
+        for i in range(m):
+            z_i = z[:,i]
+            w_i = w[i]
+            J[i,:]=w_i*evaluate_grad_r_i_m2(z_i,A)
+            r[i]=evaluate_r_i_m2(z_i,w_i,A,vec)
+                
+        matrix= np.matmul(np.linalg.inv(np.matmul(J.T,J)), J.T)
+        p=- np.matmul(matrix,r)
+        
+              
+        # cholesky factorization, change evaluate grad_ri
+        alpha=armijo_stepsize_modded(x, my, p, delta=.75, gamma=1, beta=.5)
+        
+        x= x+ alpha*p
+        A,vec=phi(x,2)
+        k += 1
+    return x, [my/c_i(x) for c_i in constraints()]
+
 
 
 def armijo_stepsize_modded(x_old, my,  d, delta=.75, gamma=1, beta=.5):
@@ -188,7 +232,10 @@ def barrier_method(my, x_init, bound, k=1):
     while np.linalg.norm(grad_lagrangian(x_init, l), 2) > bound:
         # feasible starting point, that is updated
 
-        x_init, l = steepest_descent(tau(k), x_init, my)
+        #x_init, l = steepest_descent(tau(k), x_init, my)
+        
+        #change initial alpha=20
+        x_init, l = gauss_newton(x_init, my, 20, tau(k),z, w)
 
         my *= .5
         k += 1
@@ -270,11 +317,11 @@ def plot_ellipses(creation, array,z):
 
         #plot level sets
         if(r==0):
-            ellipse_num=plt.contour(Z1,Z2,Z,0, colors=('k'), linewidths=0.5)
+            ellipse_num=plt.contour(Z1,Z2,Z,0, colors=('k'), linewidths=1)
             path_num=ellipse_num.collections[0].get_paths()[0]
             xy_num = path_num.vertices
         else:
-            plt.contour(Z1,Z2,Z,0, colors=('g'), linewidths=0.5)
+            plt.contour(Z1,Z2,Z,0, colors=('g'), linewidths=0.3)
 
     m,v=phi(array[r,:],2)
 
@@ -284,7 +331,7 @@ def plot_ellipses(creation, array,z):
             Z[j][i] = (np.dot(z_i, np.dot(m, z_i)) + np.dot(v, z_i)) - 1
 
     #plot ellipse used for data set creation
-    ellipse=plt.contour(Z1,Z2,Z,0, colors=('r'), linestyles='dashed')
+    ellipse=plt.contour(Z1,Z2,Z,0, colors=('r'), linestyles='dashed', linewidths=1)
     path=ellipse.collections[0].get_paths()[0]
     xy = path.vertices
 
@@ -308,9 +355,9 @@ if __name__ == "__main__":
     time, use False.
     '''
 
-    plots_on = False
+    plots_on = True
 
-    method ='indef' # either own, indef, PD
+    method ='own' # either own, indef, PD
 
     global z, w, l_min, l_max
 
@@ -388,7 +435,7 @@ if __name__ == "__main__":
                 plt.plot(np.take(z[0,:],np.where(w==1)[0]),np.take(z[1,:],np.where(w==1)[0]),'ro', alpha=0.8, ms=3)
                 plt.plot(np.take(z[0,:],np.where(w==-1)[0]),np.take(z[1,:],np.where(w==-1)[0]),'bo',alpha=0.5, ms=3)
                 plot_ellipses(phi_inv(A, b),np.array(x_sol),z)
-                plt.title('exact solution and convergence to it')
+                #plt.title('exact solution and convergence to it')
                 #plt.savefig('Model2_SD_b.png')
                 plt.show()
 
@@ -397,7 +444,8 @@ if __name__ == "__main__":
                 plt.plot(np.take(z[0,:],np.where(w==1)[0]),np.take(z[1,:],np.where(w==1)[0]),'ro', alpha=0.8, ms=3)
                 plt.plot(np.take(z[0,:],np.where(w==-1)[0]),np.take(z[1,:],np.where(w==-1)[0]),'bo',alpha=0.5, ms=3)
                 plot_ellipses(phi_inv(A, b),np.array(x_sol),z)
-                plt.title('exact solution and convergence to it')
                 #plt.savefig('Model2_SD_b.png')
                 plt.show()
+
+
 
