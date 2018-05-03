@@ -287,8 +287,9 @@ def generate_matrix_limit(lambdas):
     z = np.random.rand(3);
     A11 = z[0]*deltaMax
     A22 = z[1]*deltaMax
-    A12 = (2*z[2]-1)*np.sqrt(2*lambdas[0]*deltaMax+deltaMax^2)
-    return np.array[[A11,A12],[A12,A22]]
+    A12 = (2*z[2]-1)*np.sqrt(2*lambdas[0]*deltaMax+deltaMax**2)
+    A = np.array([[A11,A12],[A12,A22]])
+    return A
 
 
 

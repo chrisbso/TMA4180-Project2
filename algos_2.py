@@ -433,8 +433,8 @@ if __name__ == "__main__":
 
     global z, w, l_min, l_max
 
-    l_min = 0.0001
-    l_max = 10
+    l_min = 0.001
+    l_max = 5
 
     termination_crit = 10**-3
 
@@ -442,8 +442,9 @@ if __name__ == "__main__":
 
     if method == 'own':
         my_x = create_rd_x_initial()
-        A, b = generate_rnd_mx(2, 'own', phi(my_x, 2)[0]), np.random.rand(2)
-       
+        A, b = generate_rnd_mx(2, method, phi(my_x, 2)[0]), np.random.rand(2)
+    elif method == 'limit':
+        A, b = generate_rnd_mx(2, method, np.array([l_min,l_max])), np.random.rand(2)
     else:
         A, b = generate_rnd_mx(2, method), np.random.rand(2)
 
