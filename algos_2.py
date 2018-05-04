@@ -171,27 +171,27 @@ def phi_inv(matrix, vector):
     return x_vector
 
 
-def steepest_descent(bound, x, mu, k=0):
+def steepest_descent(bound, x_sd, mu, k=0):
     wantToBreak = False
-    while np.linalg.norm(grad_P(x, mu), 2) > bound:
+    while np.linalg.norm(grad_P(x_sd, mu), 2) > bound:
 
-        direction = -grad_P(x, mu)
+        direction = -grad_P(x_sd, mu)
 
-        alpha = armijo_stepsize_modded(x, mu, direction)
+        alpha = armijo_stepsize_modded(x_sd, mu, direction)
 
-        x += alpha * direction
+        x_sd += alpha * direction
 
         k += 1
 
         if k % 100 == 0:
-            temp = list(x)
-            print(x)
-            if all(x == temp):
-                print('No improvement in x. Condition limit reached.')
+            temp = list(x_sd)
+            print(x_sd)
+            if all(x_sd == temp):
+                print('No improvement in x_sd. Condition limit reached.')
                 wantToBreak = True
                 break
 
-    return x, [mu/c_i(x) for c_i in constraints()], wantToBreak
+    return x_sd, [mu/c_i(x_sd) for c_i in constraints()], wantToBreak
 
 
 def gauss_newton(initial_data, my, bound,z, w):
@@ -504,8 +504,8 @@ if __name__ == "__main__":
 
     method ='indef' # either own, indef, PD, symPts
 
-    p_solver = 'GN' # either SD or GN
-    p_solver_compraison='SD'  # either nothing or SD or GN
+    p_solver = 'SD' # either SD or GN
+    p_solver_compraison='GN'  # either nothing or SD or GN
 
     l_min, l_max = .001, 10
     #################################################
