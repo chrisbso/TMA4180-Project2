@@ -172,6 +172,8 @@ def phi_inv(matrix, vector):
 
 
 def steepest_descent(bound, x_sd, mu, k=0):
+    '''using the steepest descent method to minimize our penalty function P, the parameter wantToBreak sets on True
+    when we have no change in x during the last 100 steps. When it is on True the barrier method terminates'''
     wantToBreak = False
     while np.linalg.norm(grad_P(x_sd, mu), 2) > bound:
 
@@ -299,7 +301,9 @@ def solve_system(cholesky, vector):
 
 
 def armijo_stepsize_modded(x_old, my,  d, delta=.75, gamma=1, beta=.5):
-
+    '''function to determine the stepsize in given direction by the armijo goldstein method. To make sure that our
+    new x is feasible we first reduce the step length s.t. x_new is feasible. It's feasible if there are no conflicts
+    with the constraints. '''
     value_old = func_P(x_old, my)
 
     sigma = -gamma*np.dot(grad_P(x_old, my),d/(np.linalg.norm(d,2)**2))
@@ -319,6 +323,8 @@ def armijo_stepsize_modded(x_old, my,  d, delta=.75, gamma=1, beta=.5):
 
 
 def set_parameters_according_to_setting(method, x_init):
+    '''We define here different sequences and termination criteria for our barrier method, depending on the
+    kind of problem we are facing. This grants us better solutions.'''
 
     if method == 'own':
         mu_start = .01
@@ -346,6 +352,9 @@ def set_parameters_according_to_setting(method, x_init):
 
 
 def barrier_method(mu, x_init, bound, tau, fac, solver_type):
+    '''For given sequences mu_k, tau_k and given termination criteria (bound) this function is solving our
+    constraint optimization problem. Solver_type determines the solver for the subproblem which is the
+    barrier penalty log function'''
 
     if True:
         x_good_sol = call_for_help(bound, x_init)
@@ -392,6 +401,7 @@ def barrier_method(mu, x_init, bound, tau, fac, solver_type):
 
 
 def call_for_help(bound, x_input):
+    '''Using the build-in function optimize.minimize of the package scipy to have reference for our approach'''
     cons = ({'type': 'ineq', 'fun': lambda x: x[0] - l_min},
             {'type': 'ineq', 'fun': lambda x: l_max - x[0]},
             {'type': 'ineq', 'fun': lambda x: x[2] - l_min},
@@ -401,7 +411,7 @@ def call_for_help(bound, x_input):
     func_mod = lambda x, z, w: evaluate_f_m2(z, w, phi(x,2)[0], phi(x,2)[1])
 
     result = scipy.optimize.minimize(func_mod, x_input, (z,w), constraints=cons, tol=bound, method='COBYLA')
-    print(result)
+    #print(result)
     return result.x
 
 
@@ -506,12 +516,16 @@ if __name__ == "__main__":
     #################################################
     plots_on = True # either True or False
 
-    method ='own' # either own, indef, PD, symPts
-
-    p_solver = 'SD' # either SD or GN
+    method ='own' # either own, indef, PD, symPts -> here you can choose how the set of points are created.
+                  # own creates a set where the exact solution is feasible
+                  # indef creates a set where the exact solution is a hyperbolid (not feasible)
+                  # PD crates a set where the exact solution is a not necessarily feasible ellipsoid
+                  # symPts creates a set of points as described in the report
+    p_solver = 'SD' # either SD or GN -> choose SD for steepest descent and GN for Gauss-Newton
     p_solver_compraison='GN'  # either nothing or SD or GN
 
-    l_min, l_max = .001, 10
+    l_min, l_max = .001, 10 # sets conditions for our constrains; don't go too small, since we cant create good point
+                            # sets for this kind of problem
     #################################################
 
     #switch case for generating different points/starting ellipsoids
