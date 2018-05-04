@@ -172,7 +172,7 @@ def phi_inv(matrix, vector):
 
 
 def steepest_descent(bound, x, mu, k=0):
-
+    wantToBreak = False
     while np.linalg.norm(grad_P(x, mu), 2) > bound:
 
         direction = -grad_P(x, mu)
@@ -187,14 +187,14 @@ def steepest_descent(bound, x, mu, k=0):
             temp = list(x)
             print(x)
             if x[0] == temp[0]:
-                print(':-(')
+                print('No improvement in x. Condition limit reached.')
+                wantToBreak = True
+                break
+
+    return x, [mu/c_i(x) for c_i in constraints()], wantToBreak
 
 
-    return x, [mu/c_i(x) for c_i in constraints()]
-
-
-def gauss_newton(initial_data, my, initial_alpha,
-                  bound,z, w):
+def gauss_newton(initial_data, my, bound,z, w):
     
     '''Gauss-Newton algorithm. Uses the mapping P with the residuals and a term
     with the constraints. Approximates grad f and f'' and uses the exact gradient
@@ -202,11 +202,10 @@ def gauss_newton(initial_data, my, initial_alpha,
     to solve system of equations.
     Gives back x-vector that minimizes P.
     '''
-    
+    wantToBreak = False
     m = z.shape[1]
     k=0
     x= initial_data
-    alpha=initial_alpha
         
     J=np.zeros((m,len(x)))
     r=np.zeros(m)
@@ -239,7 +238,16 @@ def gauss_newton(initial_data, my, initial_alpha,
         x= x+ alpha*p
         A,vec=phi(x,2)
         k += 1
-    return x, [my/c_i(x) for c_i in constraints()]
+
+        if k % 100 == 0:
+            temp = list(x)
+            print(x)
+            if x[0] == temp[0]:
+                print('No improvement in x. Condition limit reached.')
+                wantToBreak = True
+                break
+
+    return x, [my/c_i(x) for c_i in constraints()], wantToBreak
 
 
 def cholesky(matrix):
@@ -357,9 +365,9 @@ def barrier_method(mu, x_init, bound, tau, fac, solver_type):
         # feasible starting point, that is updated
 
         if solver_type == 'SD':
-            x_init, l = steepest_descent(tau, x_init, mu)
+            x_init, l, breakItUp = steepest_descent(tau, x_init, mu)
         elif solver_type == 'GN':
-            x_init, l = gauss_newton(x_init, mu, 20, tau, z, w)
+            x_init, l, breakItUp = gauss_newton(x_init, mu, tau, z, w)
         else:
             print('Invalid solver chosen')
             return x_storage, conv_in_f, t_storage # here maybe error
@@ -378,7 +386,8 @@ def barrier_method(mu, x_init, bound, tau, fac, solver_type):
 
         print(x_init)
         print('---------------------------------------------')
-
+        if breakItUp:
+            break
     return x_storage, conv_in_f, t_storage, x_good_sol
 
 
@@ -493,10 +502,10 @@ if __name__ == "__main__":
     #################################################
     plots_on = True # either True or False
 
-    method ='own' # either own, indef, PD, symPts
+    method ='symPts' # either own, indef, PD, symPts
 
     p_solver = 'GN' # either SD or GN
-    p_solver_compraison='SD'  # either nothing or SD or GN
+    p_solver_compraison=''  # either nothing or SD or GN
 
     l_min, l_max = .001, 10
     #################################################

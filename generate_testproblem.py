@@ -153,8 +153,9 @@ def generate_rnd_indef_mx(n):
     A = (A+A.transpose())/0.3
     if np.linalg.det(A) > 0:
         #if it's not already indefinite, make it diagonally dominant.
-        A[0,0] = -abs(A[0,0]) - abs(A[0,1])
-        A[1,1] = abs(A[1,1]) + abs(A[1,0])
+        A[0,0] = (-abs(A[0,0]) - abs(A[0,1]))
+        A[1,1] = (abs(A[1,1]) + abs(A[1,0]))
+    print(np.linalg.det(A))
     return A
 
 def generate_symmetric_points(a):
