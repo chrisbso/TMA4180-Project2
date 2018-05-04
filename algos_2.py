@@ -186,7 +186,7 @@ def steepest_descent(bound, x, mu, k=0):
         if k % 100 == 0:
             temp = list(x)
             print(x)
-            if x[0] == temp[0]:
+            if all(x == temp):
                 print('No improvement in x. Condition limit reached.')
                 wantToBreak = True
                 break
@@ -242,7 +242,7 @@ def gauss_newton(initial_data, my, bound,z, w):
         if k % 100 == 0:
             temp = list(x)
             print(x)
-            if x[0] == temp[0]:
+            if all(x == temp):
                 print('No improvement in x. Condition limit reached.')
                 wantToBreak = True
                 break
@@ -502,9 +502,9 @@ if __name__ == "__main__":
     #################################################
     plots_on = True # either True or False
 
-    method ='symPts' # either own, indef, PD, symPts
+    method ='indef' # either own, indef, PD, symPts
 
-    p_solver = 'GN' # either SD or GN
+    p_solver = 'SD' # either SD or GN
     p_solver_compraison=''  # either nothing or SD or GN
 
     l_min, l_max = .001, 10
