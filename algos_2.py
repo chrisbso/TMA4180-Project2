@@ -322,9 +322,9 @@ def set_parameters_according_to_setting(method, x_init):
 
     if method == 'own':
         mu_start = .01
-        tau_start = np.linalg.norm((1/2)*grad_f(x_init))
+        tau_start = 5
         tau_parameter = .5
-        termination_crit = 10**-3
+        termination_crit = 10**-5
     elif method == 'PD':
         mu_start = .1
         tau_start = np.linalg.norm((2/3)*grad_f(x_init))
@@ -460,6 +460,10 @@ def plot_ellipses(creation, array,z):
             path_num=ellipse_num.collections[0].get_paths()[0]
             xy_num = path_num.vertices
             
+        elif(r==array.shape[0]-1):
+            #last solution
+            plt.contour(Z1,Z2,Z,0, colors=('b'), linewidths=1, linestyles='dashdot')
+            
         else:
             plt.contour(Z1,Z2,Z,0, colors=('g'), linewidths=0.3)
 
@@ -502,7 +506,7 @@ if __name__ == "__main__":
     #################################################
     plots_on = True # either True or False
 
-    method ='indef' # either own, indef, PD, symPts
+    method ='own' # either own, indef, PD, symPts
 
     p_solver = 'SD' # either SD or GN
     p_solver_compraison='GN'  # either nothing or SD or GN
@@ -531,6 +535,8 @@ if __name__ == "__main__":
 
 
     mu_s, tau_s, tau_f, bd, x = set_parameters_according_to_setting(method, create_rd_x_initial())
+    
+    x_hi=np.copy(x)
     
     print("mu_s: %3.4f, tau_s=%3.4f, tau_f=%3.4f, bd=%3.4f" % \
               (mu_s, tau_s, tau_f, bd))
@@ -575,7 +581,17 @@ if __name__ == "__main__":
             if(method=='own'):
                 # error between our solution and the x-Vector used for creating the data set
                 plt.figure(5)
-                plot_convergence(np.linalg.norm((np.array(x_sol)-phi_inv(A, b)), axis=1), 'b','x_sol-x_init', 'error','plot')
+                eigmin=np.linalg.eigvals(A).min()
+                eigmax=np.linalg.eigvals(A).max()
+                eiglistmin=[]
+                eiglistmax=[]
+                for sol in x_sol:
+                    M,v=phi(sol,2)
+                    eiglistmin.append(np.linalg.eigvals(M).min())
+                    eiglistmax.append(np.linalg.eigvals(M).max())
+                me=np.array([np.sqrt((e_i-eigmin)**2+(d_i-eigmax)**2) for e_i, d_i in zip(eiglistmin,eiglistmax)])
+                plot_convergence(me, 'b','x_sol-x_init', 'error in eigenvalues','plot')
+                #plot_convergence(np.linalg.norm((np.array(x_sol)-phi_inv(A, b)), axis=1), 'b','x_sol-x_init', 'error','plot')
                 #plt.savefig('comp_SD_b.png', format='png', transporent=True, bbox_inches='tight', pad_inches=0.005)
                 plt.show()
 
@@ -607,5 +623,5 @@ if __name__ == "__main__":
     plots()
     
     if(p_solver_compraison!=''):
-        x_sol, conv, t, x_num  = barrier_method(mu_s, x, bd, tau_s, tau_f, p_solver_compraison)
+        x_sol, conv, t, x_num  = barrier_method(mu_s, x_hi, bd, tau_s, tau_f, p_solver_compraison)
         plots()
