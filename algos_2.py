@@ -379,15 +379,15 @@ def barrier_method(mu, x_init, bound, tau, fac, solver_type):
         print(x_init)
         print('---------------------------------------------')
 
-    return x_storage, conv_in_f, t_storage
+    return x_storage, conv_in_f, t_storage, x_good_sol
 
 
 def call_for_help(bound, x_input):
-    cons = ({'type': 'ineq', 'fun': lambda x: x[0] - 0.1},
-            {'type': 'ineq', 'fun': lambda x: 10 - x[0]},
-            {'type': 'ineq', 'fun': lambda x: x[2] - 0.1},
-            {'type': 'ineq', 'fun': lambda x: 10 - x[0]},
-            {'type': 'ineq', 'fun': lambda x: (x[0]*x[2])**.5 - (.1**2+x[1]**2)**.5})
+    cons = ({'type': 'ineq', 'fun': lambda x: x[0] - l_min},
+            {'type': 'ineq', 'fun': lambda x: l_max - x[0]},
+            {'type': 'ineq', 'fun': lambda x: x[2] - l_min},
+            {'type': 'ineq', 'fun': lambda x: l_max - x[0]},
+            {'type': 'ineq', 'fun': lambda x: (x[0]*x[2])**.5 - (l_min**2+x[1]**2)**.5})
 
     func_mod = lambda x, z, w: evaluate_f_m2(z, w, phi(x,2)[0], phi(x,2)[1])
 
@@ -417,7 +417,7 @@ def plot_convergence(conv_1, color_1, label1, y_axis, kind_of_plotting):
     plt.xlabel("iterations")
     plt.ylabel(y_axis)
     #plot legend
-    plt.legend(loc=9, bbox_to_anchor=(0.5, -0.4), ncol=2)
+    #plt.legend(loc=9, bbox_to_anchor=(0.5, -0.4), ncol=2)
     # show also the legend and title
     plt.tight_layout(pad=7)
 
@@ -446,13 +446,15 @@ def plot_ellipses(creation, array,z):
 
         #plot level sets
         if(r==0):
-            ellipse_num=plt.contour(Z1,Z2,Z,0, colors=('k'), linewidths=1)
+            #initial guess
+            ellipse_num=plt.contour(Z1,Z2,Z,0, colors=('k'), linewidths=1, label='starting point')
             path_num=ellipse_num.collections[0].get_paths()[0]
             xy_num = path_num.vertices
+            
         else:
             plt.contour(Z1,Z2,Z,0, colors=('g'), linewidths=0.3)
 
-    # plots red dashed curve, used for creating the data points
+    # plots red dashed curve, numerical result of the built-in function
     m,v=phi(creation,2)
     #m,v=phi(array[r,:],2)
 
@@ -465,6 +467,7 @@ def plot_ellipses(creation, array,z):
     ellipse=plt.contour(Z1,Z2,Z,0, colors=('r'), linestyles='dashed', linewidths=1)
     path=ellipse.collections[0].get_paths()[0]
     xy = path.vertices
+    #plt.clabel(ellipse,fmt='built-in solution', inline=True)
 
 
     # set limit according to ellipse size
@@ -477,6 +480,7 @@ def plot_ellipses(creation, array,z):
     #plt.ylim(-maxPlotLimit, maxPlotLimit)
     plt.xlabel(r'$z_1$')
     plt.ylabel(r'$z_2$')
+    
 
 
 if __name__ == "__main__":
@@ -514,14 +518,19 @@ if __name__ == "__main__":
     else:
         (z,w) = generate_symmetric_points(1)
 
-    mu_s, tau_s, tau_f, bd, x = set_parameters_according_to_setting(method, create_rd_x_initial())
 
-    x_sol, conv, t = barrier_method(mu_s, x, bd, tau_s, tau_f, p_solver)
+
+    mu_s, tau_s, tau_f, bd, x = set_parameters_according_to_setting(method, create_rd_x_initial())
+    
+    print("mu_s: %3.4f, tau_s=%3.4f, tau_f=%3.4f, bd=%3.4f" % \
+              (mu_s, tau_s, tau_f, bd))
+
+    x_sol, conv, t, x_num  = barrier_method(mu_s, x, bd, tau_s, tau_f, p_solver)
 
 
     # create plots
     if(plots_on):
-           
+            
             #numerical error between solution of built-in and our solution
             plt.figure(1)
             plot_convergence(conv, 'r','error function','numerical error','loglog')
@@ -539,11 +548,11 @@ if __name__ == "__main__":
             for i in range(len(x_sol)):
                 stor_f[i]=func_f(x_sol[i])
 
-            plot_convergence(stor_f, 'g','blabla', 'objective function','loglog')
+            plot_convergence(stor_f, 'g','obj function', 'objective function','loglog')
             #plt.savefig('comp_SD_b.png', format='png', transporent=True, bbox_inches='tight', pad_inches=0.005)
             plt.show()
 
-
+            '''
             plt.figure(4)
             stor_f=np.zeros(len(x_sol))
             for i in range(len(x_sol)):
@@ -552,26 +561,23 @@ if __name__ == "__main__":
             plot_convergence(stor_f, 'g','blabla', 'objective function','plot')
             #plt.savefig('comp_SD_b.png', format='png', transporent=True, bbox_inches='tight', pad_inches=0.005)
             plt.show()
-
+            '''
             if(method=='own'):
                 # error between our solution and the x-Vector used for creating the data set
                 plt.figure(5)
-                plot_convergence(np.linalg.norm((np.array(x_sol)-phi_inv(A, b)), axis=1), 'b','blabla', 'error','loglog')
-                #plt.savefig('comp_SD_b.png', format='png', transporent=True, bbox_inches='tight', pad_inches=0.005)
-                plt.show()
-
-                plt.figure(6)
-                plot_convergence(np.linalg.norm((np.array(x_sol)-phi_inv(A, b)), axis=1), 'b','blabla', 'error','plot')
+                plot_convergence(np.linalg.norm((np.array(x_sol)-phi_inv(A, b)), axis=1), 'b','x_sol-x_init', 'error','plot')
                 #plt.savefig('comp_SD_b.png', format='png', transporent=True, bbox_inches='tight', pad_inches=0.005)
                 plt.show()
 
                 '''ellipse in black and green that represent development of our
-                solution and the red dashed curve represents the curve used for
-                data set creation.'''
-                plt.figure(7)
+                solution and the red dashed curve represents the numerical 
+                result of the built-in function.'''
+                plt.figure(6)
                 plt.plot(np.take(z[0,:],np.where(w==1)[0]),np.take(z[1,:],np.where(w==1)[0]),'ro', alpha=0.8, ms=3)
                 plt.plot(np.take(z[0,:],np.where(w==-1)[0]),np.take(z[1,:],np.where(w==-1)[0]),'bo',alpha=0.5, ms=3)
-                plot_ellipses(phi_inv(A, b),np.array(x_sol),z)
+                plot_ellipses(x_num,np.array(x_sol),z)
+                #red dashed curve represents the curve used fordata set creation when using phi_inv(A, b)
+                #plot_ellipses(phi_inv(A, b),np.array(x_sol),z) 
                 #plt.title('exact solution and convergence to it')
                 #plt.savefig('Model2_SD_b.png')
                 plt.show()
@@ -580,9 +586,10 @@ if __name__ == "__main__":
                 '''ellipse in black and green that represent development of our
                 solution and the red dashed curve represents the curve used for
                 data set creation.'''
-                plt.figure(8)
+                plt.figure(7)
                 plt.plot(np.take(z[0,:],np.where(w==1)[0]),np.take(z[1,:],np.where(w==1)[0]),'ro', alpha=0.8, ms=3)
                 plt.plot(np.take(z[0,:],np.where(w==-1)[0]),np.take(z[1,:],np.where(w==-1)[0]),'bo',alpha=0.5, ms=3)
-                plot_ellipses(phi_inv(A, b),np.array(x_sol),z)
+                plot_ellipses(x_num,np.array(x_sol),z)
+                #plot_ellipses(phi_inv(A, b),np.array(x_sol),z)
                 #plt.savefig('Model2_SD_b.png')
                 plt.show()
