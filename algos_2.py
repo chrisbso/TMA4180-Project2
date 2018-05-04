@@ -400,8 +400,8 @@ def call_for_help(bound, x_input):
 
     func_mod = lambda x, z, w: evaluate_f_m2(z, w, phi(x,2)[0], phi(x,2)[1])
 
-    result = scipy.optimize.minimize(func_mod, x_input, (z,w), constraints=cons, tol=bound, method='SLSQP')
-
+    result = scipy.optimize.minimize(func_mod, x_input, (z,w), constraints=cons, tol=bound, method='COBYLA')
+    print(result)
     return result.x
 
 
@@ -504,8 +504,8 @@ if __name__ == "__main__":
 
     method ='indef' # either own, indef, PD, symPts
 
-    p_solver = 'SD' # either SD or GN
-    p_solver_compraison=''  # either nothing or SD or GN
+    p_solver = 'GN' # either SD or GN
+    p_solver_compraison='SD'  # either nothing or SD or GN
 
     l_min, l_max = .001, 10
     #################################################
