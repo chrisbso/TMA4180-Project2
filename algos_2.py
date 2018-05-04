@@ -538,7 +538,7 @@ if __name__ == "__main__":
     
     x_hi=np.copy(x)
     
-    print("mu_s: %3.4f, tau_s=%3.4f, tau_f=%3.4f, bd=%3.4f" % \
+    print("mu_s: %3.6f, tau_s=%3.6f, tau_f=%3.6f, bd=%3.6f" % \
               (mu_s, tau_s, tau_f, bd))
 
     x_sol, conv, t, x_num  = barrier_method(mu_s, x, bd, tau_s, tau_f, p_solver)
@@ -550,12 +550,12 @@ if __name__ == "__main__":
             #numerical error between solution of built-in and our solution
             plt.figure(1)
             plot_convergence(conv, 'r','error function','numerical error','loglog')
-            #plt.savefig('comp_SD_b.png', format='png', transporent=True, bbox_inches='tight', pad_inches=0.005)
+            string='../../pictures/'+method+'_'+p_solver+'_1.png'
+            #plt.savefig(string, format='png', transporent=True, bbox_inches='tight', pad_inches=0.05, dpi=600)
             plt.show()
 
             plt.figure(2)
             plot_convergence(conv, 'r','error function','numerical error','plot')
-            #plt.savefig('comp_SD_b.png', format='png', transporent=True, bbox_inches='tight', pad_inches=0.005)
             plt.show()
             
             #development of objective function
@@ -565,19 +565,11 @@ if __name__ == "__main__":
                 stor_f[i]=func_f(x_sol[i])
 
             plot_convergence(stor_f, 'g','obj function', 'objective function','loglog')
-            #plt.savefig('comp_SD_b.png', format='png', transporent=True, bbox_inches='tight', pad_inches=0.005)
+            string='../../pictures/'+method+'_'+p_solver+'_2.png'
+            #plt.savefig(string, format='png', transporent=True, bbox_inches='tight', pad_inches=0.05, dpi=600)
             plt.show()
 
-            '''
-            plt.figure(4)
-            stor_f=np.zeros(len(x_sol))
-            for i in range(len(x_sol)):
-                stor_f[i]=func_f(x_sol[i])
-
-            plot_convergence(stor_f, 'g','blabla', 'objective function','plot')
-            #plt.savefig('comp_SD_b.png', format='png', transporent=True, bbox_inches='tight', pad_inches=0.005)
-            plt.show()
-            '''
+            
             if(method=='own'):
                 # error between our solution and the x-Vector used for creating the data set
                 plt.figure(5)
@@ -591,8 +583,8 @@ if __name__ == "__main__":
                     eiglistmax.append(np.linalg.eigvals(M).max())
                 me=np.array([np.sqrt((e_i-eigmin)**2+(d_i-eigmax)**2) for e_i, d_i in zip(eiglistmin,eiglistmax)])
                 plot_convergence(me, 'b','x_sol-x_init', 'error in eigenvalues','plot')
-                #plot_convergence(np.linalg.norm((np.array(x_sol)-phi_inv(A, b)), axis=1), 'b','x_sol-x_init', 'error','plot')
-                #plt.savefig('comp_SD_b.png', format='png', transporent=True, bbox_inches='tight', pad_inches=0.005)
+                string='../../pictures/'+method+'_'+p_solver+'_4.png'
+                #plt.savefig(string, format='png', transporent=True, bbox_inches='tight', pad_inches=0.05, dpi=600)
                 plt.show()
 
                 '''ellipse in black and green that represent development of our
@@ -603,9 +595,8 @@ if __name__ == "__main__":
                 plt.plot(np.take(z[0,:],np.where(w==-1)[0]),np.take(z[1,:],np.where(w==-1)[0]),'bo',alpha=0.5, ms=3)
                 plot_ellipses(x_num,np.array(x_sol),z)
                 #red dashed curve represents the curve used fordata set creation when using phi_inv(A, b)
-                #plot_ellipses(phi_inv(A, b),np.array(x_sol),z) 
-                #plt.title('exact solution and convergence to it')
-                #plt.savefig('Model2_SD_b.png')
+                string='../../pictures/'+method+'_'+p_solver+'_3.png'
+                #plt.savefig(string, format='png', transporent=True, bbox_inches='tight', pad_inches=0.05, dpi=600)
                 plt.show()
 
             else:
@@ -616,12 +607,13 @@ if __name__ == "__main__":
                 plt.plot(np.take(z[0,:],np.where(w==1)[0]),np.take(z[1,:],np.where(w==1)[0]),'ro', alpha=0.8, ms=3)
                 plt.plot(np.take(z[0,:],np.where(w==-1)[0]),np.take(z[1,:],np.where(w==-1)[0]),'bo',alpha=0.5, ms=3)
                 plot_ellipses(x_num,np.array(x_sol),z)
-                #plot_ellipses(phi_inv(A, b),np.array(x_sol),z)
-                #plt.savefig('Model2_SD_b.png')
+                string='../../pictures/'+method+'_'+p_solver+'_3.png'
+                #plt.savefig(string, format='png', transporent=True, bbox_inches='tight', pad_inches=0.05, dpi=600)
                 plt.show()
                 
     plots()
     
     if(p_solver_compraison!=''):
+        p_solver=p_solver_compraison
         x_sol, conv, t, x_num  = barrier_method(mu_s, x_hi, bd, tau_s, tau_f, p_solver_compraison)
         plots()
