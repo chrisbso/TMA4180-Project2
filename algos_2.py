@@ -496,6 +496,7 @@ if __name__ == "__main__":
     method ='own' # either own, indef, PD, symPts
 
     p_solver = 'GN' # either SD or GN
+    p_solver_compraison='SD'  # either nothing or SD or GN
 
     l_min, l_max = .001, 10
     #################################################
@@ -526,10 +527,10 @@ if __name__ == "__main__":
               (mu_s, tau_s, tau_f, bd))
 
     x_sol, conv, t, x_num  = barrier_method(mu_s, x, bd, tau_s, tau_f, p_solver)
-
-
-    # create plots
-    if(plots_on):
+    
+    
+    def plots():
+        if(plots_on):
             
             #numerical error between solution of built-in and our solution
             plt.figure(1)
@@ -593,3 +594,9 @@ if __name__ == "__main__":
                 #plot_ellipses(phi_inv(A, b),np.array(x_sol),z)
                 #plt.savefig('Model2_SD_b.png')
                 plt.show()
+                
+    plots()
+    
+    if(p_solver_compraison!=''):
+        x_sol, conv, t, x_num  = barrier_method(mu_s, x, bd, tau_s, tau_f, p_solver_compraison)
+        plots()
