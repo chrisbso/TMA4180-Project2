@@ -447,7 +447,7 @@ def plot_ellipses(creation, array,z):
         #plot level sets
         if(r==0):
             #initial guess
-            ellipse_num=plt.contour(Z1,Z2,Z,0, colors=('k'), linewidths=1, label='starting point')
+            ellipse_num=plt.contour(Z1,Z2,Z,0, colors=('k'), linewidths=1)
             path_num=ellipse_num.collections[0].get_paths()[0]
             xy_num = path_num.vertices
             
